@@ -1,0 +1,105 @@
+---
+title: "DAIDD: Stochastic Models"
+author: "Rebecca Borchering"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{daidd_stochastic}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This tutorial simulates a simple population model where mortality is the only process. The differential equation version of the model is:
+
+$$
+{dN \over dt} = - \mu N
+$$
+
+where $N$ is the population size as a function of time $t$ and $\mu$ is the mortality rate.
+
+This R code defines a function that calculates the population over a time range, using the analytical solution to the differential equation:
+```r
+analytic <- function(
+  initial = initialPopulationSize,
+  rate = mortalityRate,
+  stepSize = timeStep,
+  maxT = maxTime
+) {
+  times = seq(0, maxT, stepSize)
+  ts <- data.frame(
+    time = times,
+    populationSize = initial * exp(-rate*times)
+  )
+  return(ts)
+}
+```
+
+This R code defines a function that calculates the population over a time range, using a discrete time approximation to the differential equation:
+```r
+discreteTime <- function(
+  initial = initialPopulationSize,
+  rate = mortalityRate,
+  stepSize = timeStep,
+  maxT = maxTime
+) {
+  tt <- 0
+  pop <- initial
+  ts <- data.frame(time = tt, populationSize = pop)
+  while (tt<maxT){
+    nextt <- tt + stepSize
+    nextpop <- pop - rate*pop*stepSize
+    ts <- rbind(
+      ts, c(time = nextt, populationSize = nextpop)
+    )
+    tt <- nextt
+    pop <- nextpop
+  }
+  return(ts)
+}
+```
+
+This R code defines a function that calculates the population over a time range, using a stochastic simulation of the process represented by the differential equation model:
+```r
+individual <- function(
+  initial = initialPopulationSize,
+  rate = mortalityRate,
+  stepSize = timeStep,
+  maxT = maxTime
+) {
+  deathTimes <- rexp(initial, rate)
+  ts <- data.frame(time = 0, populationSize = initial)
+  for(tt in seq(stepSize, maxT, stepSize)){
+    ts <- rbind(
+      ts,
+      c(time = tt, populationSize = sum(deathTimes >= tt)))
+  }
+  return(ts)
+}
+```
+
+Set the parameter values
+```r
+initialPopulationSize <- 10 # number of individuals
+mortalityRate <- 0.05       # per capital deaths per day
+timeStep <- 1								# days
+maxTime <- 30								# days
+```
+
+Setup plotting
+```r
+par(bty='L',lwd=3,mar=c(4,4,1,1))
+plot(NA,NA,ylim=c(0,initialPopulationSize),xlim=c(0,maxTime),
+     ylab='Population size',xlab='Time')
+plotter <- function(ts, col) with(ts, lines(time, populationSize, col=col))
+```
+
+Now run the three functions to see what you get
+```r
+plotter(analytic(), col="black")
+plotter(discreteTime(), col="green")
+plotter(individual(), col="red")
+```
+
+Try running these three lines multiple times without resetting the parameters or re-making the plot.  Which functions give you different outcomes each time?
+
+Now try changing the parameter values above and re-running the functions (you may want to re-make the plot as well). How does changing each of the values change the output? Can you get the greencurve to diverge from the black curve? How?
