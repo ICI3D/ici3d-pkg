@@ -12,7 +12,7 @@
 
 <meta name="author" content="Rebecca Borchering" />
 
-<meta name="date" content="2016-11-22" />
+<meta name="date" content="2016-11-23" />
 
 <title>DAIDD: Stochastic Models</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">DAIDD: Stochastic Models</h1>
 <h4 class="author"><em>Rebecca Borchering</em></h4>
-<h4 class="date"><em>2016-11-22</em></h4>
+<h4 class="date"><em>2016-11-23</em></h4>
 
 
 
@@ -146,6 +146,138 @@ plotter &lt;-<span class="st"> </span>function(ts, col) <span class="kw">with</s
 <span class="kw">plotter</span>(<span class="kw">individual</span>(), <span class="dt">col=</span><span class="st">&quot;red&quot;</span>)</code></pre></div>
 <p>Try running these three lines multiple times without resetting the parameters or re-making the plot. Which functions give you different outcomes each time?</p>
 <p>Now try changing the parameter values above and re-running the functions (you may want to re-make the plot as well). How does changing each of the values change the output? Can you get the greencurve to diverge from the black curve? How?</p>
+<div id="stochastic-sir-simulation" class="section level2">
+<h2>Stochastic SIR simulation</h2>
+<p>Compartments: (S,I,R) = (susceptible, infectious, removed)</p>
+</div>
+<div id="transitions" class="section level2">
+<h2>Transitions:</h2>
+<table>
+<thead>
+<tr class="header">
+<th align="center">Event</th>
+<th align="center">Change</th>
+<th align="center">Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Spillover (S)</td>
+<td align="center">(S, I, R)-&gt;(S-1, I+1, R)</td>
+<td align="center"><span class="math inline">\(\lambda\)</span></td>
+</tr>
+<tr class="even">
+<td align="center">Infection (S)</td>
+<td align="center">(S, I, R)-&gt;(S-1, I+1, R)</td>
+<td align="center"><span class="math inline">\(\beta I S\)</span></td>
+</tr>
+<tr class="odd">
+<td align="center">Recovery/Removal (I)</td>
+<td align="center">(S, I, R)-&gt;(S, I-1, R+1)</td>
+<td align="center"><span class="math inline">\(\gamma I\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">transitions &lt;-<span class="st"> </span><span class="kw">list</span>(
+  <span class="dt">spillover =</span> <span class="kw">c</span>(<span class="dt">S =</span> -<span class="dv">1</span>, <span class="dt">I =</span>  <span class="dv">1</span>, <span class="dt">R =</span> <span class="dv">0</span>),
+  <span class="dt">infection =</span> <span class="kw">c</span>(<span class="dt">S =</span> -<span class="dv">1</span>, <span class="dt">I =</span>  <span class="dv">1</span>, <span class="dt">R =</span> <span class="dv">0</span>),
+  <span class="dt">recovery  =</span> <span class="kw">c</span>(<span class="dt">S =</span>  <span class="dv">0</span>, <span class="dt">I =</span> -<span class="dv">1</span>, <span class="dt">R =</span> <span class="dv">1</span>),
+  <span class="dt">end =</span> <span class="kw">c</span>(<span class="dt">S =</span> <span class="dv">0</span>, <span class="dt">I =</span> <span class="dv">0</span>, <span class="dt">R =</span> <span class="dv">0</span>)
+)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">N=<span class="dv">50</span>   <span class="co"># population size</span>
+
+parms=<span class="kw">list</span>(
+  <span class="dt">lambda=</span>.<span class="dv">02</span>,      <span class="co"># spillover rate</span>
+  <span class="dt">beta=</span>.<span class="dv">2</span>,           <span class="co"># contact rate</span>
+  <span class="dt">gamma=</span>.<span class="dv">1</span>        <span class="co"># recovery rate</span>
+)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">event &lt;-<span class="st"> </span>function(prevevent, params){
+  <span class="kw">with</span>(<span class="kw">c</span>(prevevent, params),{
+    <span class="co"># update rates</span>
+    rates &lt;-<span class="st"> </span><span class="kw">c</span>(
+      <span class="dt">spillover =</span> <span class="kw">ifelse</span>(S&gt;<span class="dv">0</span>, lambda, <span class="dv">0</span>), <span class="co"># no spillover infections if S depleted</span>
+      <span class="dt">infect =</span> beta*I*S/N,
+      <span class="dt">recover =</span> gamma*I
+    )
+    
+    totRate &lt;-<span class="st"> </span><span class="kw">sum</span>(rates)
+    
+    <span class="co"># if the event rate has gone to 0, skip to end of simulation</span>
+    if (totRate==<span class="dv">0</span>) {
+      eventTime &lt;-<span class="st"> </span>final.time
+      eventType &lt;-<span class="st"> &quot;end&quot;</span>
+    } else {
+      <span class="co"># calculate time of the next event</span>
+      eventTime &lt;-<span class="st"> </span>time +<span class="st"> </span><span class="kw">rexp</span>(<span class="dv">1</span>, totRate)
+      
+      <span class="co"># choose type of event</span>
+      eventType &lt;-<span class="st"> </span><span class="kw">sample</span>(
+        <span class="kw">c</span>(<span class="st">&quot;spillover&quot;</span>,<span class="st">&quot;infection&quot;</span>,<span class="st">&quot;recovery&quot;</span>),
+        <span class="dt">size=</span><span class="dv">1</span>, <span class="dt">replace=</span>F, <span class="dt">prob=</span>rates/totRate
+      )
+    }
+    
+    <span class="co"># determine changes based on the event type</span>
+    update &lt;-<span class="st"> </span>transitions[[eventType]]
+    
+    <span class="kw">return</span>(<span class="kw">data.frame</span>(
+      <span class="dt">time =</span> eventTime,
+      <span class="kw">as.list</span>(update +<span class="st"> </span><span class="kw">c</span>(S, I, R)),
+      <span class="dt">outcome =</span> eventType
+    ))
+  })
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">simulateSIR &lt;-<span class="st"> </span>function(t,y,params){
+  <span class="kw">with</span>(<span class="kw">as.list</span>(y),{
+    ts &lt;-<span class="st"> </span><span class="kw">data.frame</span>(
+      <span class="dt">time=</span><span class="dv">0</span>,
+      <span class="dt">S=</span><span class="kw">round</span>(S), <span class="dt">I=</span><span class="kw">round</span>(I), <span class="dt">R=</span><span class="kw">round</span>(R),
+      <span class="dt">outcome =</span> <span class="st">&quot;spillover&quot;</span>
+    )
+    nextEvent &lt;-<span class="st"> </span>ts
+    while(nextEvent$time &lt;<span class="st"> </span>final.time){
+      nextEvent &lt;-<span class="st"> </span><span class="kw">event</span>(nextEvent,params)
+      ts &lt;-<span class="st"> </span><span class="kw">rbind</span>(ts, nextEvent)
+    }
+    <span class="kw">return</span>(ts)
+  })
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">final.time=<span class="dv">400</span>
+parms=parms
+
+<span class="co"># run the simulation</span>
+tsTest &lt;-<span class="st"> </span><span class="kw">simulateSIR</span>(final.time, <span class="kw">c</span>(<span class="dt">S=</span>N<span class="dv">-1</span>,<span class="dt">I=</span><span class="dv">1</span>,<span class="dt">R=</span><span class="dv">0</span>), parms)
+
+<span class="co"># plot the infectious individuals over time</span>
+<span class="kw">plot</span>(
+  tsTest$time, tsTest$I,
+  <span class="dt">type=</span><span class="st">'s'</span>, <span class="dt">main=</span><span class="st">&quot;Number Infected&quot;</span>,
+  <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,N), <span class="dt">xlim=</span><span class="kw">c</span>(<span class="dv">0</span>,final.time), <span class="dt">xlab=</span><span class="st">&quot;Time&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;&quot;</span>,
+  <span class="dt">bty=</span><span class="st">&quot;n&quot;</span>, <span class="dt">cex.main=</span><span class="dv">2</span>, <span class="dt">cex.lab=</span><span class="fl">1.5</span>, <span class="dt">cex.axis=</span><span class="fl">1.25</span>, <span class="dt">lwd=</span><span class="dv">2</span>
+)
+
+<span class="co"># plot all compartments over time</span>
+cols &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dt">S=</span><span class="st">&quot;black&quot;</span>,<span class="dt">I=</span><span class="st">&quot;red2&quot;</span>,<span class="dt">R=</span><span class="st">&quot;purple&quot;</span>)
+<span class="kw">plot</span>(
+  tsTest$time, tsTest$S,
+  <span class="dt">type=</span><span class="st">'s'</span>, <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,N<span class="dv">+1</span>), <span class="dt">bty=</span><span class="st">&quot;n&quot;</span>,
+  <span class="dt">ylab=</span><span class="st">&quot;Number of individuals&quot;</span>, <span class="dt">xlab=</span><span class="st">&quot;time&quot;</span>, <span class="dt">lwd=</span><span class="dv">2</span>,
+  <span class="dt">col =</span> cols[<span class="st">&quot;S&quot;</span>]
+)
+<span class="kw">lines</span>(tsTest$time, tsTest$I, <span class="dt">type=</span><span class="st">'s'</span>, <span class="dt">col =</span> cols[<span class="st">&quot;I&quot;</span>], <span class="dt">lwd =</span> <span class="dv">2</span>)
+<span class="kw">lines</span>(tsTest$time, tsTest$R, <span class="dt">type=</span><span class="st">'s'</span>, <span class="dt">col =</span> cols[<span class="st">&quot;R&quot;</span>], <span class="dt">lwd =</span> <span class="dv">2</span>)
+<span class="kw">legend</span>(
+  <span class="dt">x =</span> <span class="st">&quot;right&quot;</span>, <span class="kw">names</span>(cols),
+  <span class="dt">lty =</span> <span class="dv">1</span>, <span class="dt">col =</span> cols,
+  <span class="dt">bty =</span> <span class="st">&quot;n&quot;</span>, <span class="dt">lwd =</span> <span class="dv">2</span>
+)
+
+<span class="co"># print the total number of infections</span>
+<span class="kw">sum</span>(tsTest$outcome ==<span class="st"> &quot;infection&quot;</span>)
+
+<span class="co"># print the number of spillover events</span>
+<span class="kw">sum</span>(tsTest$outcome ==<span class="st"> &quot;spillover&quot;</span>) -<span class="st"> </span><span class="dv">1</span></code></pre></div>
+</div>
 
 
 
