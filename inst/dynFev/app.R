@@ -1,9 +1,12 @@
-require(data.table)
+require(data.table); require(shiny)
 # load('dynamicalFeverData.Rdata') # Load model functions and output
 
-epi.duration <- function(epi=run.example()){
-  c(Dogs=diff(range(epi$Time[epi$Cases.Pop1>0]))+1,People=diff(range(epi$Time[epi$Cases.Pop2>0]))+1)
-}
+epi.duration <- function(epi=run.example()) with(epi, {
+  c(
+    Dogs=diff(range(Time[Cases.Pop1>0]))+1,
+    People=diff(range(Time[Cases.Pop2>0]))+1
+  )
+})
 
 plot.cases <- function(epi=run.example()){
   barplot(epi$Cases.Pop1,names.arg=epi$Time,
@@ -75,7 +78,9 @@ plot.example <- function(epi=run.example(),plot.Re=FALSE){
   }
 }
 
-run.example <- function(VaxPct.Pop1=0, VaxPct.Pop2=0) sir.ex1.cb(VaxPct.Pop1, VaxPct.Pop2)
+run.example <- function(
+  VaxPct.Pop1=0, VaxPct.Pop2=0
+) sir.ex1.cb(VaxPct.Pop1, VaxPct.Pop2)
 
 make.pop <- function(N, vaxRate, I) {
   stopifnot(is.integer(N), is.integer(I), 0 < N, I <= N, 0 <= vaxRate, vaxRate <= 1)
@@ -145,3 +150,67 @@ vax.eff <- function(VAXPCT,POP,REPS=100){
          }
   )
 }
+
+ui <- shinyUI(fluidPage(
+  titlePanel('Dynamical Fever: computer exercise'),
+  navlistPanel(
+    tabPanel('Overview', includeMarkdown("overview.md")),
+    tabPanel('Part 1: Epidemic dynamics', includeMarkdown("part1.md")),
+    tabPanel('Part 2: Introduction of a veterinary vaccine', includeMarkdown("part2.md")),
+    tabPanel('Part 3: Introduction of a human vaccine', includeMarkdown("part3.md")),
+    tabPanel('Part 4: Moving forward',
+      h1('Part 4: Moving forward'),
+      p('Decide on target levels of vaccination for dogs and people in 2016, keeping in mind that it is unlikely that you will be able to acheive 100 percent vaccination of either population. Enter these values below, each as a number between 0 and 100.'),
+      sliderInput('VaxPct.Dogs',
+        'Target vaccination level for DOG population:',
+        min = 0, max = 100, value = 0,
+        width='350px'
+      ),
+      sliderInput('VaxPct.Humans',
+        'Target vaccination level for HUMAN population:',
+        min = 0, max = 100, value = 0,
+        width='350px'
+      ),
+      #),
+      p("We'll now run the model once to see an example of what might happen if these levels of vaccination were acheived in 2016. Scroll down to see what happened..."),
+      plotOutput('targetPlot'),
+      p(strong('Is this what you expected to happen? You can reload the page as many times as you like to get a feeling for whether the outcome above is typical of what would be expected when these levels of vaccination are achieved.')),
+      p('Now let\'s run the simulation 1000 times with the target vaccination levels. This may take a while.'),
+      p('These results can now be plotted to give you a better feeling for the variation in outcomes under an intervention acheiving the targeted levels of vaccination in each population:'),
+      plotOutput('distPlot'),
+      p(strong('Do these plots for your chosen target vaccination levels give you any additional insight into the processes underlying DF transmission? If not, try lowering your target vaccination levels for at least one of the populations and repeating this section. What is each of these plots showing, and do the results surprise you?'))
+    ),
+    tabPanel('Part 5: Moving forward', includeMarkdown("part5.md"))
+  ))
+)
+
+
+server <- shiny::shinyServer({
+  function(input, output) {
+    output$targetPlot <- renderPlot({
+      target.2016 <- run.example(input$VaxPct.Dogs, input$VaxPct.Humans)
+      par(mar=c(5,5,5,1), mfrow=c(1,2)) # Set up plot
+      plot.cases(target.2016)
+    })
+    output$distPlot <- renderPlot({
+      target.runs <- replicate(1000,total.cases(run.example(input$VaxPct.Dogs,input$VaxPct.Humans)))
+      par(mar=c(5,5,5,1),mfrow=c(1,2)) # Set up plot
+      hist(target.runs['Dogs',], col='dark grey',
+           main='Dogs',
+           xlab='Number of canine cases',
+           ylab='Number of runs')
+
+      hist(target.runs['People',], col='dark grey',
+           main='People',
+           xlab='Number of human cases',
+           ylab='Number of runs')
+      #     plot(target.runs['Dogs',],target.runs['People',],
+      #          main='For each of 1000 runs',
+      #          xlab='Number of canine cases',
+      #          ylab='Number of human cases')
+    })
+
+  }})
+
+
+shiny::shinyApp(ui = ui, server = server)
