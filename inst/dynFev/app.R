@@ -133,7 +133,15 @@ sir.ex1.cb <- function(
     Sus.Pop2 <- c(Sus.Pop2,Sus.Pop2[Time]-Cases.Pop2[Time+1])
     FOI.Pop2 <- c(FOI.Pop2,(1-qq.2^Cases.Pop1[Time+1]))
   }
-  return(data.frame(Time=0:MAXTIME,Cases.Pop1,Sus.Pop1,Cases.Pop2,Sus.Pop2,FOI.Pop1,FOI.Pop2))
+  return(data.frame(
+    Time=0:MAXTIME,
+    Cases.Pop1,
+    Sus.Pop1,
+    Cases.Pop2,
+    Sus.Pop2,
+    FOI.Pop1,
+    FOI.Pop2
+  ))
 }
 
 total.cases <- function(epi=run.example()){
@@ -180,7 +188,7 @@ ui <- shinyUI(fluidPage(
       plotOutput('distPlot'),
       p(strong('Do these plots for your chosen target vaccination levels give you any additional insight into the processes underlying DF transmission? If not, try lowering your target vaccination levels for at least one of the populations and repeating this section. What is each of these plots showing, and do the results surprise you?'))
     ),
-    tabPanel('Part 5: Moving forward', includeMarkdown("part5.md"))
+    tabPanel('Part 5: Vaccination outcomes', includeMarkdown("part5.md"))
   ))
 )
 
@@ -212,5 +220,6 @@ server <- shiny::shinyServer({
 
   }})
 
+#' @importFrom shiny shinyApp
 
-shiny::shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server)

@@ -17,6 +17,20 @@ hello <- function() {
   print("Hello, world!")
 }
 
-dynamicalFever <- function() shiny::runApp(system.file('dynFev', package='DAIDD'))
+#' @export
+dynamicalFever <- function() runApp(system.file('dynFev', package='DAIDD'))
 
-reedFrost <- function() shiny::runApp(system.file('reedFrost', package='DAIDD'))
+#' @export
+reedFrost <- function() runApp(system.file('reedFrost', package='DAIDD'))
+
+#' @export
+heterogenietyTutorial <- function() runApp(system.file('hetTut', package='DAIDD'))
+
+#' @import shiny
+NULL
+
+#' @import ggplot2
+NULL
+
+#' @import data.table
+NULL
