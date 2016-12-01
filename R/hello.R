@@ -13,9 +13,14 @@
 #   Check Package:             'Cmd + Shift + E'
 #   Test Package:              'Cmd + Shift + T'
 
-hello <- function() {
-  print("Hello, world!")
-}
+#' @import shiny
+NULL
+
+#' @import ggplot2
+NULL
+
+#' @import data.table
+NULL
 
 #' @export
 dynamicalFever <- function() runApp(system.file('dynFev', package='DAIDD'))
@@ -25,12 +30,3 @@ reedFrost <- function() runApp(system.file('reedFrost', package='DAIDD'))
 
 #' @export
 heterogenietyTutorial <- function() runApp(system.file('hetTut', package='DAIDD'))
-
-#' @import shiny
-NULL
-
-#' @import ggplot2
-NULL
-
-#' @import data.table
-NULL

@@ -3,4 +3,6 @@
 export(dynamicalFever)
 export(heterogenietyTutorial)
 export(reedFrost)
-importFrom(shiny,runApp)
+import(data.table)
+import(ggplot2)
+import(shiny)

@@ -1,5 +1,5 @@
-require(reshape2); require(data.table); require(shiny); require(ggplot2);
-# load('dynamicalFeverData.Rdata') # Load model functions and output
+#' @import data.table ggplot2 shiny
+NULL
 
 het.population <- function(
   pop.size, beta.mean, beta.var
@@ -87,46 +87,37 @@ het.run <- function(runid, mxdst, end.time, gmma, rho) {
   return(ts[, runid := runid ])
 }
 
-base.het.plot <- function(end.time) ggplot() +
-  aes(x=time, alpha=runid, color=state, y=value) +
-  scale_alpha_continuous(limits = c(-10, NA)) +
+base.het.plot <- function(end.time, maxpop) ggplot() +
+  aes(x=time, alpha=factor(runid), color=state, y=value) +
+  scale_alpha_discrete(limits = c(-10, NA)) +
   scale_x_continuous(limits = c(0, end.time)) +
-  theme_minimal() + guides(alpha="none")
+  scale_y_continuous(limits = c(0, maxpop)) +
+  theme_minimal() + guides(alpha="none") +
+  geom_line(data=data.table(runid=integer(), time = numeric(), state=factor(), value=numeric()))
 
-add.het.epidemic <- function(
+het.epidemic.runs <- function(
   # runs = 1,
   mxdst = het.population(pop.size = 300, beta.mean = 1, beta.var = .5),
-  runid,
+  runs,
   gmma = 1, rho = 1/10, # lose immunity
-  end.time = 5, tell.run = T
+  end.time = 5, tell.run = NULL
 ) {
-
-#  for (runid in 1:runs) {
-    ts <- het.run(runid, mxdst, end.time, gmma, rho)
-    addlines <- data.table::melt.data.table(ts, id.vars = c("runid","time"), variable.name = "state")
-#    geom_step(data = addlines)
-#    p <- p + geom_step(data = addlines)
-#  }
-#  p
-
-  # ts <- rbindlist(
-  #   lapply(1:runs, het.run,
-  #     mxdst=mxdst, end.time = end.time, gmma=gmma, rho=rho
-  #   )
-  # )
-
-  # for(ii in 1:runs)
-  # {
-  #   if(tell.run) print(paste("on run",ii,"of",runs))
-  #   ts <- het.run(mxdst, ii, end.time, gmma, rho)
-  # }
-
-
-
-  # hist(ts[,list(fsize = max(cumulativeI)),by=runid]$fsize, breaks = 100, xlab = "cumulative # infected (final size)",
-  #      xlim = c(0, f.size),
-  #      ylab = "frequency", main = "outbreak size distribution", col = "black")
+  ts <- het.run(runs[1], mxdst, end.time, gmma, rho)
+  if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runs[1]))
+  for (runid in runs[-1]) {
+      ts <- rbind(ts, het.run(runid, mxdst, end.time, gmma, rho))
+      if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runid))
+  }
+  return(melt.data.table(ts, id.vars = c("runid","time"), variable.name = "state"))
 }
+
+het.runs.hist <- function(ts) ggplot(
+  ts[,list(fsize = max(cumulativeI)), by=runid]
+) + aes(x=fsize) + geom_histogram()
+# hist(ts[,list(fsize = max(cumulativeI)),by=runid]$fsize, breaks = 100, xlab = "cumulative # infected (final size)",
+#      xlim = c(0, f.size),
+#      ylab = "frequency", main = "outbreak size distribution", col = "black")
+
 
 ui <- shinyUI({
 fluidPage(
@@ -135,9 +126,10 @@ fluidPage(
     tabPanel('Overview', includeMarkdown("overview.md")),
     tabPanel('Parts 1 & 2: Low Variance',
       includeMarkdown("part1.md"),
-      textInput("part1samples", label = "Run how many additional simulations?"), actionButton("part1click", "Run Simulations"),
+      numericInput("part1samples", label = "Run how many additional simulations?", value = 1, min = 1, max = 50, step = 1), actionButton("part1click", "Run Simulations"),
       plotOutput("part1hist"),
       plotOutput("part1series"),
+      plotOutput("part1sizes"),
       includeMarkdown("part2.md")
     ),
     tabPanel('Parts 3 & 4: Changing Variance and Population',
@@ -176,51 +168,47 @@ fluidPage(
 server <- shiny::shinyServer({
   part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
   rvs <- reactiveValues(
-    part1series = base.het.plot(end.time = 10),
+    part1series = base.het.plot(end.time = 10, maxpop=100),
     part1distro = data.table(runid=integer(), cumulativeI=integer()),
     part1index = 0
   )
   function(input, output) {
-    #het.epidemic(part1mxdst, runs = 5, end.time = 10, gmma = 1)
-    #part1series <- function() het.epidemic(part1mxdst, runs = 5, end.time = 10, gmma = 1)
-
-    # part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
-    # output$part1Hist <- renderPlot({
-    #   het.epidemic(beta.mean = 2, beta.var = .001, runs = 5, end.time = 10, pop.size = 100, gmma = 1)
-    # })
     output$part1hist <- renderPlot(het.hist(part1mxdst, beta.mean = 2))
-    output$part2hist <- renderPlot(het.hist(part1mxdst, beta.mean = 2))
 
     # part 1
     observe({
-      runid <- input$part1click
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      clicks <- input$part1click
       freezeReactiveValue(input, "part1click")
-      addedts <- add.het.epidemic(part1mxdst, runid, end.time = 10, gmma = 1)
-      rvs$part1series <- isolate(rvs$part1series) + geom_line(data=addedts)
+      start <- isolate(rvs$part1index) + 1
+      end <- start - 1 + isolate(input$part1samples)
+      rvs$part1index <- end
+      progress$inc(0, detail=sprintf("starting %d samples...", isolate(input$part1samples)))
+      addedts <- het.epidemic.runs(part1mxdst, start:end, end.time = 10, gmma = 1, tell.run = progress)
+
+      rvs$part1series <- isolate(rvs$part1series) + geom_line(data=addedts[state != "cumulativeI"])
       rvs$part1distro <- rbind(
         isolate(rvs$part1distro),
         addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
       )
-      rvs$part1samps <- runid
     })
 
     # part 2
-    observe({
-      runid <- input$part2click
-      freezeReactiveValue(input, "part2click")
-      rvs$part1series <- isolate(rvs$part1series) + add.het.epidemic(part1mxdst, runid, end.time = 10, gmma = 1)
-      rvs$part1samps <- runid
-    })
+    # observe({
+    #   runid <- input$part2click
+    #   freezeReactiveValue(input, "part2click")
+    #   rvs$part1series <- isolate(rvs$part1series) + het.epidemic.runs(part1mxdst, runid, end.time = 10, gmma = 1)
+    #   rvs$part1samps <- runid
+    # })
 
-    output$part1series <- renderPlot({
-      rvs$part1series
-      # het.epidemic(part1mxdst, runs = 5, end.time = 10, gmma = 1)
-      #het.epidemic(beta.mean = 2, beta.var = .001, runs = 5, end.time = 10, pop.size = 100, gmma = 1)
+    output$part1series <- renderPlot({ rvs$part1series })
+    output$part1sizes <- renderPlot({
+      if(rvs$part1distro[,.N != 0]) het.runs.hist(rvs$part1distro)
     })
-    output$part1samples <- renderText(rvs$part1samps)
 
   }})
 
-#' @importFrom shiny shinyApp
-
 shinyApp(ui = ui, server = server)
+
+# het.epidemic(beta.mean = 2, beta.var = .001, runs = 5, end.time = 10, pop.size = 100, gmma = 1)
