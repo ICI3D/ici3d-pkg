@@ -23,10 +23,4 @@ NULL
 NULL
 
 #' @export
-dynamicalFever <- function() runApp(system.file('dynFev', package='DAIDD'))
-
-#' @export
 reedFrost <- function() runApp(system.file('reedFrost', package='DAIDD'))
-
-#' @export
-heterogenietyTutorial <- function() runApp(system.file('hetTut', package='DAIDD'))
