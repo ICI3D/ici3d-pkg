@@ -14,9 +14,12 @@ LazyData: true
 Imports:
     shiny,
     data.table,
-    markdown
-Suggests:
+    markdown,
+    ggplot2,
     knitr,
-    rmarkdown
+    rmarkdown,
+    htmltools,
+    httpuv,
+    xtable
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
