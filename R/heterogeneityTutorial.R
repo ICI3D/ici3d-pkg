@@ -32,7 +32,7 @@ het.run <- function(runid, mxdst, end.time, gmma, rho) {
   new.time <- 0 # first individual is infected at time 0
   (( new.time -> tinf[new.ted] ) +
       rexp(1, gmma) -> trec[new.ted] ) +
-        rexp(1, rho) -> tloss[new.ted]
+        suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
   ## initialize time series data frame
   ts <- data.table(time=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
   next.time <- data.table::copy(ts)
@@ -79,7 +79,7 @@ het.run <- function(runid, mxdst, end.time, gmma, rho) {
         # infected @ new.time, recover @ infected + recovery draw, loss @ recover + loss draw
         (( new.time -> tinf[new.ted] ) +
             rexp(1, gmma) -> trec[new.ted] ) +
-              rexp(1, rho) -> tloss[new.ted]
+              suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
       }
     }
     ts <- rbind(ts, next.time)
@@ -366,6 +366,8 @@ het.server <- shinyServer({
         cycleTracking$part5cycles <- cycleTracking$part5cycles - 1
       })
 
+      if (cycleTracking$part5cycles) invalidateLater(0, session)
+
     })
 
 #    cycleTracking$itersLeft <- allowedIterations
@@ -399,7 +401,7 @@ het.server <- shinyServer({
     output$part5hist <- renderPlot(het.hist(rvs$part5mxdst, beta.mean = isolate(input$part5bmn)))
     output$part5series <- renderPlot(base.het.plot(10, isolate(input$part5pop), dt=rvs$part5series))
     output$part5sizes <- renderPlot({
-      if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part5distro)
+      if(rvs$part5distro[,.N != 0]) het.runs.hist(rvs$part5distro)
     })
 
 
