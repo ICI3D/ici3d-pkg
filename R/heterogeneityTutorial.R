@@ -172,13 +172,36 @@ het.ui <- shinyUI({
       fluidRow(column(12, includeMarkdown("inst/hetTut/part4.md"))),
       fluidRow(
         column(3,numericInput(
-          "part5var",
-          label = "R0?",
+          "part5bmn",
+          label = "beta.mean?",
           value=2, min = .1, max = 10
         )),
-        column(3, actionButton("part5click", "Run")),
-        column(3, textOutput("part5runs", inline = T)),
-        column(3, textOutput("part5TODO", inline = T))
+        column(3,numericInput(
+          "part5bvar",
+          label = "beta.var?",
+          value=.1, min = 1e-6, max = 10
+        )),
+        column(3,numericInput(
+          "part5pop",
+          label = "population?",
+          value=100, min = 10, max = 500, step = 1
+        )),
+        column(3,numericInput(
+          "part5gmma",
+          label = "gamma?",
+          value=1, min = 1e-6, max = 10
+        ))
+      ),
+      fluidRow(
+        column(3,numericInput(
+          "part5rho",
+          label = "rho?",
+          value=1e-1, min = 0, max = 10
+        )),
+        column(3, numericInput("part5samples", label = "runs?", value = 10, min = 1, max = 50, step = 1)),
+        column(2, actionButton("part5click", "Run")),
+        column(2, textOutput("part5runs", inline = T)),
+        column(2, textOutput("part5TODO", inline = T))
       ),
       fluidRow(
         column(4, plotOutput("part5hist")),
@@ -210,8 +233,7 @@ het.server <- shinyServer({
   cycleTracking <- reactiveValues(
     part1was = 0, part1cycles = 0,
     part34was = 0, part34cycles = 0,
-    part5was = 0, part5TODO = F, part5cycles = 0,
-    itersLeft = allowedIterations
+    part5was = 0, part5cycles = 0
   )
 
   rvs <- reactiveValues(
@@ -221,22 +243,25 @@ het.server <- shinyServer({
     part34mxdst = het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001),
     part34distro = emptydistro,
     part34series = emptyseries,
-    part34index = 0
+    part34index = 0,
+    part5distro = emptydistro,
+    part5series = emptyseries,
+    part5index = 0
   )
 
   function(input, output, session) {
 
-    observe({
-      input$part5click
-      rvs$part5Amxdst <- het.population(
-        pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 0.1
-      )
-      rvs$part5Bmxdst <- het.population(
-        pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 10
-      )
-      rvs$part5Aseries <- base.het.plot(end.time = 10, maxpop=100)
-      rvs$part5Bseries <- base.het.plot(end.time = 10, maxpop=100)
-    })
+    # observe({
+    #   input$part5click
+    #   rvs$part5Amxdst <- het.population(
+    #     pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 0.1
+    #   )
+    #   rvs$part5Bmxdst <- het.population(
+    #     pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 10
+    #   )
+    #   rvs$part5Aseries <- base.het.plot(end.time = 10, maxpop=100)
+    #   rvs$part5Bseries <- base.het.plot(end.time = 10, maxpop=100)
+    # })
 
     observe({
 
@@ -304,22 +329,44 @@ het.server <- shinyServer({
 
     })
 
-    # observe({
-    #
-    #   if (isolate(cycleTracking$part5was) != input$part5click) {
-    #     cycleTracking$part5TODO <- TRUE
-    #     cycleTracking$part5cycles <- part34samples
-    #     cycleTracking$part5was <- input$part5click
-    #   }
-    #
-    #   isolate(if(cycleTracking$part5TODO & (cycleTracking$itersLeft > 0)) { # do part 5 heavy lifting, if there are cycles available & there's work to do
-    #
-    #     cycleTracking$part5cycles <- cycleTracking$part5cycles - 1
-    #     cycleTracking$part5TODO <- cycleTracking$part5cycles != 0
-    #     cycleTracking$itersLeft <- cycleTracking$itersLeft - 1
-    #   })
-    #
-    # })
+    observe({
+      input$part5click
+      rvs$part5index <- 0
+      rvs$part5mxdst   <- het.population(
+        pop.size = isolate(input$part5pop),
+        beta.mean = isolate(input$part5bmn),
+        beta.var = isolate(input$part5bvar)
+      )
+      rvs$part5series  <- emptyseries
+      rvs$part5distro  <- emptydistro
+    })
+
+    if (!isolate(cycleTracking$part1cycles | cycleTracking$part34cycles)) observe({
+
+      if (isolate(cycleTracking$part5was) != input$part5click) {
+        cycleTracking$part5cycles <- isolate(input$part5samples)
+        cycleTracking$part5was <- input$part5click
+      }
+
+      isolate(if(cycleTracking$part5cycles) { # do part 5 heavy lifting, if there are cycles available & there's work to do
+
+        addedts <- het.epidemic.runs(rvs$part5mxdst, cycleTracking$part5cycles, end.time = 10, gmma = input$part5gmma, rho = input$part5rho)
+
+        rvs$part5series <- rbind(
+          rvs$part5series,
+          addedts[state != "cumulativeI"]
+        )
+
+        rvs$part5distro <- rbind(
+          rvs$part5distro,
+          addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
+        )
+
+        rvs$part5index <- rvs$part5index + 1
+        cycleTracking$part5cycles <- cycleTracking$part5cycles - 1
+      })
+
+    })
 
 #    cycleTracking$itersLeft <- allowedIterations
 
@@ -345,6 +392,16 @@ het.server <- shinyServer({
     output$part34sizes <- renderPlot({
       if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part34distro)
     })
+
+    output$part5TODO <- renderText(ifelse(cycleTracking$part5cycles, "Running", "Waiting"))
+    output$part5runs <- renderText(sprintf("Total Runs: %d", rvs$part5index))
+
+    output$part5hist <- renderPlot(het.hist(rvs$part5mxdst, beta.mean = isolate(input$part5bmn)))
+    output$part5series <- renderPlot(base.het.plot(10, isolate(input$part5pop), dt=rvs$part5series))
+    output$part5sizes <- renderPlot({
+      if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part5distro)
+    })
+
 
     # output$part5Ahist <- renderPlot(het.hist(rvs$part5Amxdst, beta.mean = input$part5var))
     # output$part5Aseries <- renderPlot({ rvs$part5Aseries })
