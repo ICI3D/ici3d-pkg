@@ -1,3 +1,5 @@
+#' @import data.table ggplot2 shiny
+
 epi.duration <- function(epi=run.example()) with(epi, {
   c(
     Dogs=diff(range(Time[Cases.Pop1>0]))+1,
@@ -159,10 +161,10 @@ vax.eff <- function(VAXPCT,POP,REPS=100){
 df.ui <- shinyUI(fluidPage(
   titlePanel('Dynamical Fever: computer exercise'),
   navlistPanel(
-    tabPanel('Overview', includeMarkdown("inst/dynFev/overview.md")),
-    tabPanel('Part 1: Epidemic dynamics', includeMarkdown("inst/dynFev/part1.md")),
-    tabPanel('Part 2: Introduction of a veterinary vaccine', includeMarkdown("inst/dynFev/part2.md")),
-    tabPanel('Part 3: Introduction of a human vaccine', includeMarkdown("inst/dynFev/part3.md")),
+    tabPanel('Overview', includeMarkdown("inst/dynFev/overview.md"), br()),
+    tabPanel('Part 1: Epidemic dynamics', includeMarkdown("inst/dynFev/part1.md"), br()),
+    tabPanel('Part 2: Introduction of a veterinary vaccine', includeMarkdown("inst/dynFev/part2.md"), br()),
+    tabPanel('Part 3: Introduction of a human vaccine', includeMarkdown("inst/dynFev/part3.md"), br()),
     tabPanel('Part 4: Moving forward',
       h1('Part 4: Moving forward'),
       p('Decide on target levels of vaccination for dogs and people in 2016, keeping in mind that it is unlikely that you will be able to acheive 100 percent vaccination of either population. Enter these values below, each as a number between 0 and 100.'),
@@ -183,13 +185,14 @@ df.ui <- shinyUI(fluidPage(
       p('Now let\'s run the simulation 1000 times with the target vaccination levels. This may take a while.'),
       p('These results can now be plotted to give you a better feeling for the variation in outcomes under an intervention acheiving the targeted levels of vaccination in each population:'),
       plotOutput('distPlot'),
-      p(strong('Do these plots for your chosen target vaccination levels give you any additional insight into the processes underlying DF transmission? If not, try lowering your target vaccination levels for at least one of the populations and repeating this section. What is each of these plots showing, and do the results surprise you?'))
+      p(strong('Do these plots for your chosen target vaccination levels give you any additional insight into the processes underlying DF transmission? If not, try lowering your target vaccination levels for at least one of the populations and repeating this section. What is each of these plots showing, and do the results surprise you?')),
+      br()
     ),
-    tabPanel('Part 5: Vaccination outcomes', includeMarkdown("inst/dynFev/part5.md"))
+    tabPanel('Part 5: Vaccination outcomes', includeMarkdown("inst/dynFev/part5.md"), br())
   ))
 )
 
-df.server <- shiny::shinyServer({
+df.server <- shinyServer({
   function(input, output) {
     output$targetPlot <- renderPlot({
       target.2016 <- run.example(input$VaxPct.Dogs, input$VaxPct.Humans)
@@ -216,6 +219,5 @@ df.server <- shiny::shinyServer({
 
   }})
 
-#' @importFrom shiny shinyApp
-
+#' @export
 dynamicalFever <- function() shinyApp(ui = df.ui, server = df.server)
