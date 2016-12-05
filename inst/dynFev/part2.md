@@ -6,7 +6,7 @@ In 2012, the number of DF cases was substantially lower than in any year other t
 
 ### 2012
 
-img(src = 'df2012.png'),
+!['2012 Outcomes'](df2012.png)
 
 Based on this information, opinion among Health Department employees was divided on the success of the vaccine. Some employees argued that the vaccine had effectively reduced the number of DF cases, and that the reduction in canine cases due to the vaccine might have indirectly protected people from contracting the disease as well. Other employees pointed out that there were more cases in 2012 than in 2010 (before the vaccine had been approved), and argued that vaccination of only 40 percent of dogs could not explain a 20-fold reduction in the number of canine cases (from an average of ~780 cases in previous years with outbreaks). This group concluded that the relatively small number of cases in 2012 could be unrelated to adoption of the vaccine.
 
@@ -16,7 +16,7 @@ As it turned out, the 2013 data did not clarify things for the Director, and the
 
 ### 2013
 
-img(src = 'df2013.png'),
+!['2013 Outcomes'](df2013.png)
 
 In the first 17 weeks of 2013, 109 dogs and 213 people contracted DF.
 
