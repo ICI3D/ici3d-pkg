@@ -122,10 +122,12 @@ het.runs.hist <- function(ts) ggplot(
 #      ylab = "frequency", main = "outbreak size distribution", col = "black")
 
 
-het.ui <- shinyUI(fluidPage(
+het.ui <- shinyUI({
+  button34 <- actionButton("part34click", "Run")
+  fluidPage(
   titlePanel('Heterogeneity Tutorial'),
   navlistPanel(
-    tabPanel('Overview', includeMarkdown("inst/hetTut/overview.md")),
+    tabPanel('Overview', includeMarkdown("inst/hetTut/overview.md"), br()),
     tabPanel('Parts 1 & 2: Low Variance',
       fluidRow(column(12, includeMarkdown("inst/hetTut/part1.md"))),
       fluidRow(
@@ -137,51 +139,56 @@ het.ui <- shinyUI(fluidPage(
       fluidRow(
         column(4, plotOutput("part1hist")), column(4, plotOutput("part1series")), column(4, plotOutput("part1sizes"))
       ),
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part2.md")))
+      fluidRow(column(12, includeMarkdown("inst/hetTut/part2.md"))),
+      br()
     ),
-    tabPanel('Parts 3 & 4: Changing Variance and Population',
+    tabPanel('Part 3: Changing Variance and Population',
       fluidRow(column(12, includeMarkdown("inst/hetTut/part3.md"))),
-      fluidRow(column(4, numericInput(
+      fluidRow(column(3, numericInput(
           "part3var",
-          label = "Desired variance?",
+          label = "Variance?",
           value=0.001, min = 0.0001, max = 1
         )),
-        column(2, actionButton("part34click", "Run")),
-        column(3, textOutput("part34runs", inline = T)),
-        column(3, textOutput("part34TODO", inline = T))
+        column(3, numericInput(
+          "part4var",
+          label = "Population?",
+          value=100, min = 10, max = 500, step = 1
+        )),
+        column(2, button34),
+        column(2, textOutput("part34runs", inline = T)),
+        column(2, textOutput("part34TODO", inline = T))
       ),
       fluidRow(
         column(4, plotOutput("part34hist")),
         column(4, plotOutput("part34series")),
         column(4, plotOutput("part34sizes"))
       ),
+      fluidRow(
+
+      ),
+      br()
+    ),
+    tabPanel('Part 4: Heterogeniety & R0',
       fluidRow(column(12, includeMarkdown("inst/hetTut/part4.md"))),
       fluidRow(
-        column(6, numericInput(
-          "part4var",
-          label = "Population size?",
-          value=100, min = 10, max = 500, step = 1
-        )),
-        column(6, actionButton("part34click", "Run Simulations"))
-      )
-    ),
-    tabPanel('Part 5: Heterogeniety & R0',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part5.md"))),
-      fluidRow(
-        column(6,numericInput(
+        column(3,numericInput(
           "part5var",
           label = "R0?",
           value=2, min = .1, max = 10
         )),
-        column(6, actionButton("part5click", "Run Simulations"))
+        column(3, actionButton("part5click", "Run")),
+        column(3, textOutput("part5runs", inline = T)),
+        column(3, textOutput("part5TODO", inline = T))
       ),
       fluidRow(
-        column(6, plotOutput("part5hist")),
-        column(6, plotOutput("part5series"))
-      )
+        column(4, plotOutput("part5hist")),
+        column(4, plotOutput("part5series")),
+        column(4, plotOutput("part5sizes"))
+      ),
+      br()
     ), widths = c(2, 10)
   ))
-)
+})
 
 
 # want to update graphics between work
@@ -353,4 +360,4 @@ het.server <- shinyServer({
   }})
 
 #' @export
-heterogenietyTutorial <- function() shinyApp(ui = het.ui, server = het.server)
+heterogeneityTutorial <- function() shinyApp(ui = het.ui, server = het.server)

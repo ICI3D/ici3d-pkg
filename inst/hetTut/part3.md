@@ -1,5 +1,12 @@
-# Part 3: Changing Variance
+# Part 3: Changing Variance & Population
 
-Experimenting: Now try comparing the same model with the same mean mixing rate but different variance in the mixing rate. What happens?
+Experimenting: Now we try comparing 30 runs of the same model with the same mean mixing rate, but different variance in the mixing rate and different populations. 
 
-Use the slider to adjust the variance; the simulation is fixed at 30 runs.
+First, we will focus on just changing the heterogeneity.  When you use a higher or lower variance, what happens to the simulation results?
+
+Now change the population size. Note that the bigger this is the longer the simulation is going to run, so be careful not to choose anything too big (probably not more than 500 or so).
+
+What happens to the randomness in the simulation as you increase population size. How does this change how different levels of heterogeneity (variance in mixing
+rates) affects epidmic dynamics?
+
+Use these input fields to pick a variance and population size, then click the run button.

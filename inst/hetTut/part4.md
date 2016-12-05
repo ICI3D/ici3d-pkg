@@ -1,6 +1,7 @@
-# Part 4: Changing Population
+# Part 5: Heterogeneity & R0
 
-Now change the above code so that you have a larger population size. Note that the bigger this is the longer the simulation is going to run, so be careful not to choose anything too big (probably not more than 500 or so).
+Recall that R0 = beta/gamma.
 
-What happens to the randomness in the simulation as you increase population size. How does this change how different levels of heterogeneity (variance in mixing
-rates) affects epidmic dynamics?
+What about when individuals have different betas? Since we're using gamma = 1, in this model R0 = beta, at least for a homogenous population.
+
+Explore how adding heterogeneity can affect outbreak dynamics when the average R (*i.e.*, the number of infectious contacts each infected person makes) is less than 1 but heterogeneous.
