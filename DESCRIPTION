@@ -13,6 +13,7 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     shiny,
+    reshape2,
     data.table,
     markdown,
     ggplot2,

@@ -13,18 +13,18 @@ het.population <- function(
 
 het.hist <- function(mxdst, beta.mean, wd = .1) {
   breaks <- seq(0, ceiling(max(mxdst)), by = wd)
-  p <- ggplot(data.frame(heterogeniety = mxdst)) +
+  p <- ggplot(data.frame(het = mxdst)) +
     geom_histogram(
-      aes(x=heterogeniety, y=..density..),
+      aes(x=het, y=..density..),
       breaks = breaks
-    ) +
+    ) + xlab("contact rate (1/day)") +
     geom_vline(xintercept=beta.mean, color="red") +
     theme_bw() + theme(panel.border = element_blank())
   p
 }
 
-het.run <- function(runid, mxdst, end.time, gmma, rho) {
-  set.seed(runid)
+het.run <- function(rid, mxdst, end.time, gmma, rho) {
+  set.seed(rid)
   pop.size <- length(mxdst)
   tloss <- trec <- tinf <- rep(NaN, pop.size)
 
@@ -85,7 +85,7 @@ het.run <- function(runid, mxdst, end.time, gmma, rho) {
     ts <- rbind(ts, next.time)
     next.time <- data.table::copy(next.time)[, time := new.time ]
   }
-  return(ts[, runid := runid ])
+  return(ts[, runid := rid ])
 }
 
 base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), time = numeric(), state=factor(), value=numeric())) ggplot() +
@@ -98,7 +98,6 @@ base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), time 
 
 
 het.epidemic.runs <- function(
-  # runs = 1,
   mxdst = het.population(pop.size = 300, beta.mean = 1, beta.var = .5),
   runs,
   gmma = 1, rho = 1/10, # lose immunity
@@ -117,10 +116,6 @@ het.runs.hist <- function(ts) ggplot(
   ts[,list(fsize = max(cumulativeI)), by=runid]
 ) + aes(x=fsize) + geom_histogram(binwidth = 5) +
   theme_minimal() + xlim(0, NA)
-# hist(ts[,list(fsize = max(cumulativeI)),by=runid]$fsize, breaks = 100, xlab = "cumulative # infected (final size)",
-#      xlim = c(0, f.size),
-#      ylab = "frequency", main = "outbreak size distribution", col = "black")
-
 
 het.ui <- shinyUI({
   button34 <- actionButton("part34click", "Run")
@@ -213,55 +208,42 @@ het.ui <- shinyUI({
   ))
 })
 
-
-# want to update graphics between work
-# server block needs to a maximum amount of work (aka, simulation runs)
-# then release for render updates, but resume after if there's still work to do
-
-emptyseries <- data.table(runid=integer(), time=numeric(), state=factor(levels=c("S","I","R")), value=integer())
+emptyseries <- data.table(
+  runid=integer(),
+  time=numeric(),
+  state=factor(levels=c("S","I","R")),
+  value=integer()
+)
 emptydistro <- data.table(runid=integer(), cumulativeI=integer())
 
+part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
+
+allowedIterations <- 100
+
+part34samples <- 30
 
 het.server <- shinyServer({
 
-  part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
-
-  allowedIterations <- 100
-
-  part34samples <- 30
-
-  cycleTracking <- reactiveValues(
-    part1was = 0, part1cycles = 0,
-    part34was = 0, part34cycles = 0,
-    part5was = 0, part5cycles = 0
-  )
-
-  rvs <- reactiveValues(
-    part1series = emptyseries,
-    part1distro = emptydistro,
-    part1index = 0,
-    part34mxdst = het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001),
-    part34distro = emptydistro,
-    part34series = emptyseries,
-    part34index = 0,
-    part5distro = emptydistro,
-    part5series = emptyseries,
-    part5index = 0
-  )
-
   function(input, output, session) {
 
-    # observe({
-    #   input$part5click
-    #   rvs$part5Amxdst <- het.population(
-    #     pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 0.1
-    #   )
-    #   rvs$part5Bmxdst <- het.population(
-    #     pop.size = 100, beta.mean = isolate(input$part5var), beta.var = 10
-    #   )
-    #   rvs$part5Aseries <- base.het.plot(end.time = 10, maxpop=100)
-    #   rvs$part5Bseries <- base.het.plot(end.time = 10, maxpop=100)
-    # })
+    cycleTracking <- reactiveValues(
+      part1was = 0, part1cycles = 0,
+      part34was = 0, part34cycles = 0,
+      part5was = 0, part5cycles = 0
+    )
+
+    rvs <- reactiveValues(
+      part1series = emptyseries,
+      part1distro = emptydistro,
+      part1index = 0,
+      part34mxdst = het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001),
+      part34distro = emptydistro,
+      part34series = emptyseries,
+      part34index = 0,
+      part5distro = emptydistro,
+      part5series = emptyseries,
+      part5index = 0
+    )
 
     observe({
 
@@ -275,7 +257,9 @@ het.server <- shinyServer({
 
       # do part 12 heavy lifting, if there are cycles available & there's work to do
       isolate(if (cycleTracking$part1cycles) {
+
           addedts <- het.epidemic.runs(part1mxdst, rvs$part1index, end.time = 10, gmma = 1)
+
           rvs$part1series <- rbind(
             rvs$part1series,
             addedts[state != "cumulativeI"]
@@ -370,13 +354,6 @@ het.server <- shinyServer({
 
     })
 
-#    cycleTracking$itersLeft <- allowedIterations
-
-#    print(sprintf("updating iters left: %d", isolate(cycleTracking$itersLeft)))
-    #    output$part1cycles <- renderText(isolate(cycleTracking$part1cycles))
-    #    output$itersLeft <- renderText(isolate(cycleTracking$itersLeft))
-
-
     output$part1TODO <- renderText(ifelse(cycleTracking$part1cycles, "Running", "Waiting"))
     output$part1runs <- renderText(sprintf("Total Runs: %d", rvs$part1index))
 
@@ -403,18 +380,6 @@ het.server <- shinyServer({
     output$part5sizes <- renderPlot({
       if(rvs$part5distro[,.N != 0]) het.runs.hist(rvs$part5distro)
     })
-
-
-    # output$part5Ahist <- renderPlot(het.hist(rvs$part5Amxdst, beta.mean = input$part5var))
-    # output$part5Aseries <- renderPlot({ rvs$part5Aseries })
-    # output$part5Asizes <- renderPlot({
-    #   if(rvs$part5Adistro[,.N != 0]) het.runs.hist(rvs$part5Adistro)
-    # })
-    # output$part5Bhist <- renderPlot(het.hist(rvs$part5Bmxdst, beta.mean = input$part5var))
-    # output$part5Bseries <- renderPlot({ rvs$part5Bseries })
-    # output$part5Bsizes <- renderPlot({
-    #   if(rvs$part5Bdistro[,.N != 0]) het.runs.hist(rvs$part5Bdistro)
-    # })
 
   }})
 

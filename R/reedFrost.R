@@ -66,9 +66,6 @@ rf.ui <- shinyUI({
 # server block needs to a maximum amount of work (aka, simulation runs)
 # then release for render updates, but resume after if there's still work to do
 
-emptyseries <- data.table(runid=integer(), time=numeric(), state=factor(levels=c("S","I","R")), count=integer())
-emptydistro <- data.table(runid=integer(), cumulativeI=integer())
-
 emptystoch <- data.table(
   runid = integer(),
   time = integer(),
