@@ -2,7 +2,7 @@ Package: DAIDD
 Type: Package
 Title: The Workshop Material for Dynamical Approaches to Infectious Disease Data
     (DAIDD) Program
-Version: 0.1.0
+Version: 0.2.0
 Author: Carl A. B. Pearson
 Maintainer: Carl A. B. Pearson <cabp@vgrnd.com>
 Description: The DAIDD package provides the course material
