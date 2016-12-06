@@ -23,4 +23,4 @@ To add another sample series, click the button above the graphs.
  
 ## OUTPUT
 
-The panel on the left is a histogram of the contact rate distribution. The middle shows the epidemic time series. The right panel shows the distribution of outbreak size from the runs (realizations you performed).
+The panel on the left is a histogram of the contact rate distribution. The middle shows the epidemic time series. The right panel shows the distribution of outbreak final size (*i.e.* total number of people infected before outbreak is over) from the runs.

@@ -19,7 +19,11 @@ het.hist <- function(mxdst, beta.mean, wd = .1) {
       breaks = breaks
     ) + xlab("contact rate (1/day)") +
     geom_vline(xintercept=beta.mean, color="red") +
-    theme_bw() + theme(panel.border = element_blank())
+    theme_bw() + theme(
+      panel.border = element_blank(),
+      axis.title = element_text(size=rel(2)),
+      axis.text = element_text(size=rel(2))
+    )
   p
 }
 
@@ -34,7 +38,7 @@ het.run <- function(rid, mxdst, end.time, gmma, rho) {
       rexp(1, gmma) -> trec[new.ted] ) +
         suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
   ## initialize time series data frame
-  ts <- data.table(time=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
+  ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
   next.time <- data.table::copy(ts)
   ## calculate current inf rate - should this be changing?  was inside while loop
   inf.rate <- mean(mxdst) * pop.size
@@ -43,14 +47,14 @@ het.run <- function(rid, mxdst, end.time, gmma, rho) {
   # times <- rexp(ceiling(end.time*1.1*inf.rate), inf.rate)
   # while (sum(times) < end.time) times <- c(times, rexp(ceiling(end.time*0.1*inf.rate), inf.rate))
 
-  while(next.time[, (time < end.time) & (I > 0)]) {
+  while(next.time[, (day < end.time) & (I > 0)]) {
     ## Choose potential event time
-    new.time <- rexp(1, inf.rate) + next.time$time
+    new.time <- rexp(1, inf.rate) + next.time$day
     ## figure out if anyone has recovered between last event and this one; I->R
-    recoveries <- sum((trec > next.time$time) & (trec < new.time), na.rm = T)
+    recoveries <- sum((trec > next.time$day) & (trec < new.time), na.rm = T)
     next.time[,`:=`(I=I-recoveries, R=R+recoveries)]
     ## figure out if anyone has lost immunity between last event and this one; R->S
-    who.loss <- which((tloss > next.time$time) & (tloss < new.time))
+    who.loss <- which((tloss > next.time$day) & (tloss < new.time))
     ilosses <- length(who.loss)
     if (ilosses > 0) { # if there are immunity losses...
       ## reset tinf, trec, tloss for individuals who lost immunity
@@ -83,24 +87,28 @@ het.run <- function(rid, mxdst, end.time, gmma, rho) {
       }
     }
     ts <- rbind(ts, next.time)
-    next.time <- data.table::copy(next.time)[, time := new.time ]
+    next.time <- data.table::copy(next.time)[, day := new.time ]
   }
   return(ts[, runid := rid ])
 }
 
-base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), time = numeric(), state=factor(), value=numeric())) ggplot() +
-  aes(x=time, alpha=runid, color=state, y=value, group=interaction(runid, state)) +
+base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric())) ggplot() +
+  aes(x=day, alpha=runid, color=state, y=value, group=interaction(runid, state)) +
   scale_alpha_continuous(limits = c(-10, NA)) +
   scale_x_continuous(limits = c(0, end.time)) +
   scale_y_continuous(limits = c(0, maxpop)) +
-  theme_minimal() + guides(alpha="none") + theme(legend.position = "bottom", legend.direction = "horizontal") +
+  theme_minimal() + theme(
+    axis.title = element_text(size=rel(2)),
+    axis.text = element_text(size=rel(2))
+  ) +
+  guides(alpha="none") + theme(legend.position = "bottom", legend.direction = "horizontal") +
   geom_line(data=dt)
 
 
 het.epidemic.runs <- function(
   mxdst = het.population(pop.size = 300, beta.mean = 1, beta.var = .5),
   runs,
-  gmma = 1, rho = 1/10, # lose immunity
+  gmma = 1, rho = 0, # lose immunity
   end.time = 5, tell.run = NULL
 ) {
   ts <- het.run(runs[1], mxdst, end.time, gmma, rho)
@@ -109,13 +117,16 @@ het.epidemic.runs <- function(
       ts <- rbind(ts, het.run(runid, mxdst, end.time, gmma, rho))
       if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runid))
   }
-  return(melt.data.table(ts, id.vars = c("runid","time"), variable.name = "state"))
+  return(melt.data.table(ts, id.vars = c("runid","day"), variable.name = "state"))
 }
 
 het.runs.hist <- function(ts) ggplot(
-  ts[,list(fsize = max(cumulativeI)), by=runid]
-) + aes(x=fsize) + geom_histogram(binwidth = 5) +
-  theme_minimal() + xlim(0, NA)
+  ts[,list(`final size` = max(cumulativeI)), by=runid]
+) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
+  theme_minimal() + theme(
+    axis.title = element_text(size=rel(2)),
+    axis.text = element_text(size=rel(2))
+  ) + ylab("# of outbreaks")
 
 het.ui <- shinyUI({
   button34 <- actionButton("part34click", "Run")
@@ -163,7 +174,7 @@ het.ui <- shinyUI({
       ),
       br()
     ),
-    tabPanel('Part 4: Heterogeniety & R0',
+    tabPanel('Part 4: Heterogeneity & R0',
       fluidRow(column(12, includeMarkdown("inst/hetTut/part4.md"))),
       fluidRow(
         column(3,numericInput(
@@ -191,7 +202,7 @@ het.ui <- shinyUI({
         column(3,numericInput(
           "part5rho",
           label = "rho?",
-          value=1e-1, min = 0, max = 10
+          value=0, min = 0, max = 10
         )),
         column(3, numericInput("part5samples", label = "runs?", value = 10, min = 1, max = 50, step = 1)),
         column(2, actionButton("part5click", "Run")),
@@ -210,7 +221,7 @@ het.ui <- shinyUI({
 
 emptyseries <- data.table(
   runid=integer(),
-  time=numeric(),
+  day=numeric(),
   state=factor(levels=c("S","I","R")),
   value=integer()
 )
@@ -354,7 +365,7 @@ het.server <- shinyServer({
 
     })
 
-    output$part1TODO <- renderText(ifelse(cycleTracking$part1cycles, "Running", "Waiting"))
+    output$part1TODO <- renderText(ifelse(cycleTracking$part1cycles, "Running", ""))
     output$part1runs <- renderText(sprintf("Total Runs: %d", rvs$part1index))
 
     output$part1hist <- renderPlot(het.hist(part1mxdst, beta.mean = 2))
@@ -363,7 +374,7 @@ het.server <- shinyServer({
       if(rvs$part1distro[,.N != 0]) het.runs.hist(rvs$part1distro)
     })
 
-    output$part34TODO <- renderText(ifelse(cycleTracking$part34cycles, "Running", "Waiting"))
+    output$part34TODO <- renderText(ifelse(cycleTracking$part34cycles, "Running", ""))
     output$part34runs <- renderText(sprintf("Total Runs: %d", rvs$part34index))
 
     output$part34hist <- renderPlot(het.hist(rvs$part34mxdst, beta.mean = 2))
@@ -372,7 +383,7 @@ het.server <- shinyServer({
       if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part34distro)
     })
 
-    output$part5TODO <- renderText(ifelse(cycleTracking$part5cycles, "Running", "Waiting"))
+    output$part5TODO <- renderText(ifelse(cycleTracking$part5cycles, "Running", ""))
     output$part5runs <- renderText(sprintf("Total Runs: %d", rvs$part5index))
 
     output$part5hist <- renderPlot(het.hist(rvs$part5mxdst, beta.mean = isolate(input$part5bmn)))
