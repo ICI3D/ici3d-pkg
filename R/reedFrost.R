@@ -1,17 +1,6 @@
 #' @import data.table ggplot2 shiny
 NULL
 
-rf.hist <- function(dt) {
-  p <- ggplot(dt) +
-    geom_histogram(
-      aes(x=fsize, y=..density..),
-      breaks = breaks
-    ) +
-    geom_vline(xintercept=beta.mean, color="red") +
-    theme_bw() + theme(panel.border = element_blank())
-  p
-}
-
 det.rf.run <- function(N, p, minC = 0.1) {
   result <- data.table(S=N-1, C=1, R=0)
   nC <- 1
@@ -37,14 +26,6 @@ sto.rf.run <- function(N, p) {
   }
   result[, time := .I-1 ]
 }
-
-rf.hist <- function(ts) ggplot(
-  ts[,list(fsize = max(cumulativeI)), by=runid]
-) + aes(x=fsize) + geom_histogram(binwidth = 5) +
-  theme_minimal() + xlim(0, NA)
-# hist(ts[,list(fsize = max(cumulativeI)),by=runid]$fsize, breaks = 100, xlab = "cumulative # infected (final size)",
-#      xlim = c(0, f.size),
-#      ylab = "frequency", main = "outbreak size distribution", col = "black")
 
 rf.cols <- c("black","red","blue","green","yellow","purple")
 
@@ -85,7 +66,7 @@ rf.ui <- shinyUI({
 # server block needs to a maximum amount of work (aka, simulation runs)
 # then release for render updates, but resume after if there's still work to do
 
-emptyseries <- data.table(runid=integer(), time=numeric(), state=factor(levels=c("S","I","R")), value=integer())
+emptyseries <- data.table(runid=integer(), time=numeric(), state=factor(levels=c("S","I","R")), count=integer())
 emptydistro <- data.table(runid=integer(), cumulativeI=integer())
 
 emptystoch <- data.table(
@@ -93,7 +74,7 @@ emptystoch <- data.table(
   time = integer(),
   color = factor(levels=rf.cols),
   variable = factor(levels=c("S","C","R")),
-  value = integer()
+  count = integer()
 )
 
 rf.server <- shinyServer({
@@ -119,29 +100,29 @@ rf.server <- shinyServer({
         isolate(rvs$stochruns),
         melt.data.table(
           sto.rf.run(isolate(input$stochN), isolate(input$stochp))[, runid := rid ][, color := isolate(input$stochcol) ],
-          id.vars = c("runid", "time", "color")
+          id.vars = c("runid", "time", "color"), value.name = "count"
         )
       )
     })
 
     output$detpanel <- renderPlot({
-      ggplot(melt.data.table(rvs$detrun, id.vars = "time")) +
-        theme_minimal() +
-        aes(x=time, y=value) + facet_grid(. ~ variable) + geom_step()
+      ggplot(melt.data.table(rvs$detrun, id.vars = "time", value.name = "count")) +
+        theme_bw() + theme(strip.text = element_text(size = rel(5))) +
+        aes(x=time, y=count) + facet_grid(. ~ variable) + geom_step()
     })
     output$detfsize <- renderText(sprintf("final size: %f", rvs$detrun[,sum(C)]))
 
     output$stochpanel <- renderPlot({
-      ggplot(rvs$stochruns) + theme_minimal() +
-        aes(x=time, y=value, group=runid, color=factor(color, levels=rf.cols)) +
+      ggplot(rvs$stochruns) + theme_bw() + theme(strip.text = element_text(size = rel(5))) +
+        aes(x=time, y=count, group=runid, color=factor(color, levels=rf.cols)) +
         facet_grid(. ~ variable) + geom_step() +
         scale_color_manual(values = rf.cols, drop=F)
     })
 
     output$stochfsize <- renderPlot({
-      distro <- rvs$stochruns[variable=="C",list(fsize=sum(value)),by=list(runid, color)]
+      distro <- rvs$stochruns[variable=="C",list(`total cases`=sum(count)),by=list(runid, color)]
       ggplot(distro) + theme_minimal() +
-        aes(x=fsize, fill=factor(color, levels=rf.cols)) + geom_bar() +
+        aes(x=`total cases`, fill=factor(color, levels=rf.cols)) + geom_bar() +
         scale_fill_manual(values = rf.cols, drop=F)
     })
 
