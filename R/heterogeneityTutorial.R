@@ -27,74 +27,146 @@ het.hist <- function(mxdst, beta.mean, wd = .1) {
   p
 }
 
+# het.run <- function(rid, mxdst, end.time, gmma, rho) {
+#   set.seed(rid)
+#   pop.size <- length(mxdst)
+#   tloss <- trec <- tinf <- rep(NaN, pop.size)
+#
+#   new.ted <- sample.int(pop.size, 1, prob = mxdst)
+#   new.time <- 0 # first individual is infected at time 0
+#   (( new.time -> tinf[new.ted] ) +
+#       rexp(1, gmma) -> trec[new.ted] ) +
+#         suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
+#   ## initialize time series data frame
+#   ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
+#   next.time <- data.table::copy(ts)
+#   ## calculate current inf rate - should this be changing?  was inside while loop
+#   inf.rate <- mean(mxdst) * pop.size
+#
+#   ## expected samples to get sum(samples) > end.time
+#   # times <- rexp(ceiling(end.time*1.1*inf.rate), inf.rate)
+#   # while (sum(times) < end.time) times <- c(times, rexp(ceiling(end.time*0.1*inf.rate), inf.rate))
+#
+#   while(next.time[, (day < end.time) & (I > 0)]) {
+#     ## Choose potential event time
+#     new.time <- rexp(1, inf.rate) + next.time$day
+#     ## figure out if anyone has recovered between last event and this one; I->R
+#     recoveries <- sum((trec > next.time$day) & (trec < new.time), na.rm = T)
+#     next.time[,`:=`(I=I-recoveries, R=R+recoveries)]
+#     ## figure out if anyone has lost immunity between last event and this one; R->S
+#     who.loss <- which((tloss > next.time$day) & (tloss < new.time))
+#     ilosses <- length(who.loss)
+#     if (ilosses > 0) { # if there are immunity losses...
+#       ## reset tinf, trec, tloss for individuals who lost immunity
+#       tinf[who.loss] <- trec[who.loss] <- tinf[who.loss] <- NaN
+#       ## update R, S counts
+#       next.time[,`:=`(R=R-ilosses, S=S+ilosses)]
+#     }
+#
+#     ## choose infec*tor*
+#     cur.tor <- sample(1:pop.size, 1, prob = mxdst)
+#     ## has this id been infected?
+#     cur.inf <- {
+#       tr <- trec[cur.tor]
+#       !is.nan(tr) & (tr > new.time)
+#     }
+#     # if source infected, then choose (potentially) infec*ted* individual
+#     if(cur.inf) {
+#       # choose from everyone except infec*tor*
+#       new.ted <- sample((1:pop.size)[-cur.tor], 1, prob = mxdst[-cur.tor])
+#       if(is.nan(tinf[new.ted])) { ## is this ID currently susceptible?
+#         ## then infect them
+#         next.time[,`:=`(
+#           cumulativeI = cumulativeI + 1,
+#           S = S - 1, I = I + 1
+#         )]
+#         # infected @ new.time, recover @ infected + recovery draw, loss @ recover + loss draw
+#         (( new.time -> tinf[new.ted] ) +
+#             rexp(1, gmma) -> trec[new.ted] ) +
+#               suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
+#       }
+#     }
+#     ts <- rbind(ts, next.time)
+#     next.time <- data.table::copy(next.time)[, day := new.time ]
+#   }
+#   return(ts[, runid := rid ])
+# }
+
 het.run <- function(rid, mxdst, end.time, gmma, rho) {
   set.seed(rid)
   pop.size <- length(mxdst)
-  tloss <- trec <- tinf <- rep(NaN, pop.size)
+  tloss <- trec <- rep(NaN, pop.size)
+
+  inf.rate <- mean(mxdst) * pop.size
+
+  event.times <- c(0, rexp(ceiling(end.time/inf.rate*1.1), inf.rate))
+  while(sum(event.times) < end.time) event.times <- c(event.times, rexp(ceiling(end.time/inf.rate*0.1), inf.rate))
+
+  event.times <- cumsum(event.times)
+  event.times <- event.times[which(event.times <= end.time)]
+
+  stepmax <- length(event.times)
+  S <- c(pop.size-1, rep.int(0, stepmax-1))
+  I <- c(1, rep.int(0, stepmax-1))
+  R <- rep.int(0, stepmax)
+  cumulativeI <- I
 
   new.ted <- sample.int(pop.size, 1, prob = mxdst)
-  new.time <- 0 # first individual is infected at time 0
-  (( new.time -> tinf[new.ted] ) +
-      rexp(1, gmma) -> trec[new.ted] ) +
-        suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
+  last.time <- 0 # first individual is infected at time 0
+
+  ( last.time + rexp(1, gmma) -> trec[new.ted] ) +
+    ifelse(rho, rexp(1, rho), end.time) -> tloss[new.ted]
   ## initialize time series data frame
-  ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
-  next.time <- data.table::copy(ts)
+  #ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
+  #next.time <- data.table::copy(ts)
   ## calculate current inf rate - should this be changing?  was inside while loop
-  inf.rate <- mean(mxdst) * pop.size
+
 
   ## expected samples to get sum(samples) > end.time
   # times <- rexp(ceiling(end.time*1.1*inf.rate), inf.rate)
   # while (sum(times) < end.time) times <- c(times, rexp(ceiling(end.time*0.1*inf.rate), inf.rate))
 
-  while(next.time[, (day < end.time) & (I > 0)]) {
-    ## Choose potential event time
-    new.time <- rexp(1, inf.rate) + next.time$day
-    ## figure out if anyone has recovered between last event and this one; I->R
-    recoveries <- sum((trec > next.time$day) & (trec < new.time), na.rm = T)
-    next.time[,`:=`(I=I-recoveries, R=R+recoveries)]
-    ## figure out if anyone has lost immunity between last event and this one; R->S
-    who.loss <- which((tloss > next.time$day) & (tloss < new.time))
-    ilosses <- length(who.loss)
-    if (ilosses > 0) { # if there are immunity losses...
-      ## reset tinf, trec, tloss for individuals who lost immunity
-      tinf[who.loss] <- trec[who.loss] <- tinf[who.loss] <- NaN
-      ## update R, S counts
-      next.time[,`:=`(R=R-ilosses, S=S+ilosses)]
+  last.time <- 0
+  for (i in 2:stepmax) {
+    recoveries <- which(trec < last.time)
+    trec[recoveries] <- NaN
+    I[i] <- I[i-1] - length(recoveries)
+    R[i] <- R[i-1] + length(recoveries)
+    S[i] <- S[i-1]
+    cumulativeI[i] <- cumulativeI[i-1]
+
+    who.loss <- which(tloss < last.time)
+    if (ilosses <- length(who.loss)) {
+      tloss[who.loss] <- NaN
+      R[i] <- R[i] - ilosses
+      S[i] <- S[i] + ilosses
     }
 
-    ## choose infec*tor*
-    cur.tor <- sample(1:pop.size, 1, prob = mxdst)
+    cur.tor <- sample(pop.size, 1, prob = mxdst)
     ## has this id been infected?
-    cur.inf <- {
-      tr <- trec[cur.tor]
-      !is.nan(tr) & (tr > new.time)
-    }
-    # if source infected, then choose (potentially) infec*ted* individual
-    if(cur.inf) {
+    if(!(is.nan(tloss[cur.tor]) | is.nan(trec[cur.tor]))) {
       # choose from everyone except infec*tor*
       new.ted <- sample((1:pop.size)[-cur.tor], 1, prob = mxdst[-cur.tor])
-      if(is.nan(tinf[new.ted])) { ## is this ID currently susceptible?
+      if(is.nan(tloss[new.ted])) { ## is this ID currently susceptible?
         ## then infect them
-        next.time[,`:=`(
-          cumulativeI = cumulativeI + 1,
-          S = S - 1, I = I + 1
-        )]
+        S[i] <- S[i] - 1
+        I[i] <- I[i] + 1
+        cumulativeI[i] <- cumulativeI[i] + 1
         # infected @ new.time, recover @ infected + recovery draw, loss @ recover + loss draw
-        (( new.time -> tinf[new.ted] ) +
-            rexp(1, gmma) -> trec[new.ted] ) +
-              suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
+        ( event.times[i] + rexp(1, gmma) -> trec[new.ted] ) +
+          ifelse(rho, rexp(1, rho), end.time) -> tloss[new.ted]
       }
     }
-    ts <- rbind(ts, next.time)
-    next.time <- data.table::copy(next.time)[, day := new.time ]
+    if (!I[i]) break;
+    last.time <- event.times[i]
   }
-  return(ts[, runid := rid ])
+
+  return(data.table(runid = rid, day = event.times[1:i], S=S[1:i], I=I[1:i], R=R[1:i], cumulativeI = cumulativeI[1:i]))
 }
 
-base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric())) ggplot() +
-  aes(x=day, alpha=runid, color=state, y=value, group=interaction(runid, state)) +
-  scale_alpha_continuous(limits = c(-10, NA)) +
+base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric(), runstate=factor())) ggplot() +
+  aes(x=day, alpha=runstate, color=state, y=value, group=interaction(runid, state)) +
+  scale_alpha_manual(values=c(past=0.3, current=1)) +
   scale_x_continuous(limits = c(0, end.time)) +
   scale_y_continuous(limits = c(0, maxpop)) +
   theme_minimal() + theme(
@@ -111,13 +183,13 @@ het.epidemic.runs <- function(
   gmma = 1, rho = 0, # lose immunity
   end.time = 5, tell.run = NULL
 ) {
-  ts <- het.run(runs[1], mxdst, end.time, gmma, rho)
+  ts <- het.run(runs[1], mxdst, end.time, gmma, rho)[, runstate := "current"]
   if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runs[1]))
   for (runid in runs[-1]) {
-      ts <- rbind(ts, het.run(runid, mxdst, end.time, gmma, rho))
+      ts <- rbind(ts[, runstate := "past"], het.run(runid, mxdst, end.time, gmma, rho)[, runstate := "current"])
       if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runid))
   }
-  return(melt.data.table(ts, id.vars = c("runid","day"), variable.name = "state"))
+  return(melt.data.table(ts, id.vars = c("runid","day","runstate"), variable.name = "state"))
 }
 
 het.runs.hist <- function(ts) ggplot(
@@ -222,6 +294,7 @@ het.ui <- shinyUI({
 emptyseries <- data.table(
   runid=integer(),
   day=numeric(),
+  runstate=factor(levels=c("past","current")),
   state=factor(levels=c("S","I","R")),
   value=integer()
 )
@@ -232,6 +305,13 @@ part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
 allowedIterations <- 100
 
 part34samples <- 30
+
+updateSeries <- function(old, new) {
+  rbind(
+    old[, runstate := "past"],
+    new[state != "cumulativeI"]
+  )
+}
 
 het.server <- shinyServer({
 
@@ -271,10 +351,7 @@ het.server <- shinyServer({
 
           addedts <- het.epidemic.runs(part1mxdst, rvs$part1index, end.time = 10, gmma = 1)
 
-          rvs$part1series <- rbind(
-            rvs$part1series,
-            addedts[state != "cumulativeI"]
-          )
+          rvs$part1series <- updateSeries(rvs$part1series, addedts)
           rvs$part1distro <- rbind(
             rvs$part1distro,
             addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
@@ -306,10 +383,7 @@ het.server <- shinyServer({
 
         addedts <- het.epidemic.runs(rvs$part34mxdst, cycleTracking$part34cycles, end.time = 10, gmma = 1)
 
-        rvs$part34series <- rbind(
-          rvs$part34series,
-          addedts[state != "cumulativeI"]
-        )
+        rvs$part34series <- updateSeries(rvs$part34series, addedts)
 
         rvs$part34distro <- rbind(
           rvs$part34distro,
@@ -346,11 +420,7 @@ het.server <- shinyServer({
       isolate(if(cycleTracking$part5cycles) { # do part 5 heavy lifting, if there are cycles available & there's work to do
 
         addedts <- het.epidemic.runs(rvs$part5mxdst, cycleTracking$part5cycles, end.time = 10, gmma = input$part5gmma, rho = input$part5rho)
-
-        rvs$part5series <- rbind(
-          rvs$part5series,
-          addedts[state != "cumulativeI"]
-        )
+        rvs$part5series <- updateSeries(rvs$part5series, addedts)
 
         rvs$part5distro <- rbind(
           rvs$part5distro,
