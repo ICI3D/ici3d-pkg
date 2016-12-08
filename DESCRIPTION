@@ -21,6 +21,7 @@ Imports:
     rmarkdown,
     htmltools,
     httpuv,
-    xtable
+    xtable,
+    deSolve
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1

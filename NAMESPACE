@@ -2,7 +2,9 @@
 
 export(dynamicalFever)
 export(heterogeneityTutorial)
+export(hivTutorial)
 export(reedFrost)
 import(data.table)
+import(deSolve)
 import(ggplot2)
 import(shiny)
