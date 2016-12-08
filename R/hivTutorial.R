@@ -2,4 +2,4 @@
 NULL
 
 #' @export
-hivTutorial <- function() rmarkdown::run("inst/hiv/index.Rmd")
+hivTutorial <- function() rmarkdown::run(system.file("hiv", "index.Rmd", package = "DAIDD"))
