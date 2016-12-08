@@ -11,6 +11,8 @@ runtime: shiny
 
 ```{r, echo=FALSE, message=FALSE}
 require(deSolve)
+sim.start.year <- 1975
+sim.end.year <- 2025
 ```
 <br>
 
@@ -25,7 +27,6 @@ In this tutorial, we will fit a series of models with different model structures
 
 <div class="col-lg-4">
 <div style="width:218px">
-
 ```{r, echo=FALSE, message=FALSE}
 inputPanel(
   selectInput("useSite", label = "Dataset for fitting:",
@@ -48,7 +49,7 @@ plot(year,prevalence
      , cex = 1.8
      , col = 'green'
      , ylim = c(0,1)
-     , xlim = c(1970,2040)
+     , xlim = c(sim.start.year,sim.end.year)
      , bty = 'L'
      , xlab = 'Year', ylab = 'Prevalence'
      , main = paste('HIV prevalence in',input$useSite)
@@ -85,7 +86,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,1)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -96,7 +97,7 @@ renderPlot({
       
       inits <- c(S=1,I=exp(input$p0))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,2040,0.1)
+                               , times = seq(1976,sim.end.year,0.1)
                                , func = model1
                                , parms = c(b = input$birthRate
                                            , mu = input$mu
@@ -110,7 +111,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,1)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -163,6 +164,9 @@ _You can now move on to Model 2._
 #### Parameters and initial conditions
 ```{r, echo=FALSE}
 sidebarPanel(
+  actionButton("runButton1","Show model output (see plot above)",width = "100%"),
+  br(),
+  br(),
   sliderInput('lambda',
               div(HTML('Rate at which new infections occur (&lambda;):')),
               min = 0,
@@ -193,9 +197,6 @@ sidebarPanel(
               max = 0.04,
               value = 0.018,
               step = 0.001),
-  br(),
-  br(),
-  actionButton("runButton1","Show model output",width = "100%"),
   width = 10
 )
 ```
@@ -214,7 +215,7 @@ plot(year,prevalence
      , cex = 1.8
      , col = 'green'
      , ylim = c(0,0.4)
-     , xlim = c(1970,2040)
+     , xlim = c(sim.start.year,sim.end.year)
      , bty = 'L'
      , xlab = 'Year', ylab = 'Prevalence'
      , main = paste('HIV prevalence in',input$useSite)
@@ -252,7 +253,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -263,7 +264,7 @@ renderPlot({
       
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,2040,0.1)
+                               , times = seq(1976,sim.end.year,0.1)
                                , func = model2
                                , parms = c(b = input$birthRate2
                                            , a = input$a
@@ -278,7 +279,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -329,6 +330,9 @@ _You can now move on to Model 3._
 #### Parameters and initial conditions
 ```{r, echo=FALSE}
 sidebarPanel(
+  actionButton("runButton2","Show model output (see plot above)",width = "100%"),
+  br(),
+  br(),
   sliderInput('a',
               'Rate of decline as a function of prevalence (a):',
               min = 0,
@@ -347,9 +351,6 @@ sidebarPanel(
               max = 0.04,
               value = 0.029,
               step = 0.001),
-  br(),
-  br(),
-  actionButton("runButton2","Show model output",width = "100%"),
   width = 10
 )
 ```
@@ -369,7 +370,7 @@ plot(year,prevalence
      , cex = 1.8
      , col = 'green'
      , ylim = c(0,0.4)
-     , xlim = c(1970,2040)
+     , xlim = c(sim.start.year,sim.end.year)
      , bty = 'L'
      , xlab = 'Year', ylab = 'Prevalence'
      , main = paste('HIV prevalence in',input$useSite)
@@ -415,7 +416,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -426,7 +427,7 @@ renderPlot({
       
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,2040,0.1)
+                               , times = seq(1976,sim.end.year,0.1)
                                , func = model3
                                , parms = c(b = 0.029
                                            , a = input$a3
@@ -443,7 +444,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(1970,2040)
+           , xlim = c(sim.start.year,sim.end.year)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -489,6 +490,9 @@ We still cannot fit the decline in prevalence but at least we know that AIDS dea
 #### Parameters and initial conditions
 ```{r, echo=FALSE}
 sidebarPanel(
+  actionButton("runButton3","Show model output (see plot above)",width = "100%"),
+  br(),
+  br(),
   sliderInput('a3',
               div(HTML('Rate of decline as a function of prevalence (a):')),
               min = 0,
@@ -501,9 +505,6 @@ sidebarPanel(
               max = 0.6,
               value = 0.5,
               step = 0.05),
-  br(),
-  br(),
-  actionButton("runButton3","Show model output",width = "100%"),
   width = 10
 )
 ```
