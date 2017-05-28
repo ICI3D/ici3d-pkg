@@ -167,7 +167,7 @@ df.ui <- shinyUI(fluidPage(
     tabPanel('Part 3: Introduction of a human vaccine', includeMarkdown("inst/dynFev/part3.md"), br()),
     tabPanel('Part 4: Moving forward',
       h1('Part 4: Moving forward'),
-      p('Decide on target levels of vaccination for dogs and people in 2016, keeping in mind that it is unlikely that you will be able to acheive 100 percent vaccination of either population. Enter these values below, each as a number between 0 and 100.'),
+      p('Decide on target levels of vaccination for dogs and people in 2017, keeping in mind that it is unlikely that you will be able to acheive 100 percent vaccination of either population. Enter these values below, each as a number between 0 and 100.'),
       sliderInput('VaxPct.Dogs',
         'Target vaccination level for DOG population:',
         min = 0, max = 100, value = 0,
@@ -179,7 +179,7 @@ df.ui <- shinyUI(fluidPage(
         width='350px'
       ),
       #),
-      p("We'll now run the model once to see an example of what might happen if these levels of vaccination were acheived in 2016. Scroll down to see what happened..."),
+      p("We'll now run the model once to see an example of what might happen if these levels of vaccination were acheived in 2017. Scroll down to see what happened..."),
       plotOutput('targetPlot'),
       p(strong('Is this what you expected to happen? You can reload the page as many times as you like to get a feeling for whether the outcome above is typical of what would be expected when these levels of vaccination are achieved.')),
       p('Now let\'s run the simulation 1000 times with the target vaccination levels. This may take a while.'),
@@ -195,9 +195,9 @@ df.ui <- shinyUI(fluidPage(
 df.server <- shinyServer({
   function(input, output) {
     output$targetPlot <- renderPlot({
-      target.2016 <- run.example(input$VaxPct.Dogs, input$VaxPct.Humans)
+      target.2017 <- run.example(input$VaxPct.Dogs, input$VaxPct.Humans)
       par(mar=c(5,5,5,1), mfrow=c(1,2)) # Set up plot
-      plot.cases(target.2016)
+      plot.cases(target.2017)
     })
     output$distPlot <- renderPlot({
       target.runs <- replicate(1000,total.cases(run.example(input$VaxPct.Dogs,input$VaxPct.Humans)))

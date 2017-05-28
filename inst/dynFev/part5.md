@@ -2,7 +2,7 @@
 
 The following plots show what happens when only one population (dogs or people) is vaccinated, with different levels of coverage. The red dots represent the mean number of cases over 100 runs of the simulation, and the boxes show the middle 50 percent of runs. The thick black horizontal line is the median outbreak size for each intervention.
 
-### 2015
+### 2016
 
 !['Dynamical Fever Scenarios'](dfScenarios.png)
 
