@@ -1,6 +1,6 @@
 # Overview
 
-*Juliet R.C. Pulliam, 2012-2016*  
+*Juliet R.C. Pulliam, 2012-2017*  
 *Some Rights Reserved*  
 *[CC BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/)*
 
