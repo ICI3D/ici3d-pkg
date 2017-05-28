@@ -1,6 +1,6 @@
 ---
 title: "DAIDD: Stochastic Models"
-author: "Rebecca Borchering"
+author: "Juliet R. C. Pulliam (based on a spreadsheet tutorial by Alex Welte)"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
