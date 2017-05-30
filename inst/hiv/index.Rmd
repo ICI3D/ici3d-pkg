@@ -174,7 +174,7 @@ sidebarPanel(
   sliderInput('lambda',
               div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
-              max = 0.6,
+              max = 3,
               value = 0.5,
               step = 0.05),
   sliderInput('p0',
@@ -344,7 +344,7 @@ sidebarPanel(
   sliderInput('lambda2',
               div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
-              max = 0.6,
+              max = 3,
               value = 0.5,
               step = 0.05),
   sliderInput('birthRate2',
@@ -506,7 +506,7 @@ sidebarPanel(
   sliderInput('lambda3',
               div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
-              max = 0.6,
+              max = 3,
               value = 0.5,
               step = 0.05),
   width = 10
@@ -529,8 +529,8 @@ model4 <- function(t,y,parms){
     I <- I1 + I2 + I3 + I4
     
     lambdaHat <- lambda*exp(-a*I/N)
-    control.t <- min(1,1 - cMax/(1+exp(-cRate*(t-cHalf))))
-    FOI <- control.t*lambdaHat*I/N
+    invControl <- min(1,1 - cMax/(1+exp(-cRate*(t-cHalf))))
+    FOI <- invControl*lambdaHat*I/N
     
     g <- 4*delta
     
@@ -651,33 +651,35 @@ renderPlot({
 ```
 
 ```{r, echo=FALSE, message=FALSE}
-renderPlot({
-  ff <- Vectorize(function(tt){
-    input$cMax4/(1+exp(-input$cRate4*(tt-input$cHalf)))
-  })
-  if(input$runButton4==0){
-    par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-    curve(ff(x)
-          , 1000
-          , xlim = c(startYear,endYear)
-          , ylim = c(0,1)
-          , col = 'cyan'
-          , ylab = 'Intervention'
-          , xlab = 'Year'
-          , bty = 'L'
-    )
-  }else{
-    par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-    curve(ff(x)
-          , xlim = c(startYear,endYear)
-          , ylim = c(0,1)
-          , col = 'cyan'
-          , ylab = 'Intervention'
-          , xlab = 'Year'
-          , bty = 'L'
-    )
-  }
-},width=580)
+# renderPlot({
+#   ff <- Vectorize(function(tt){
+#     input$cMax4/(1+exp(-input$cRate4*(tt-input$cHalf)))
+#   })
+#   if(input$runButton4==0){
+#     par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+#     curve(ff(x)
+#           , xlim = c(startYear,endYear)
+#           , ylim = c(0,1)
+#           , col = 'cyan'
+#           , ylab = 'Intervention'
+#           , xlab = 'Year'
+#           , bty = 'L'
+#     )
+#   }else{
+#     par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+#     curve(ff(x)
+#           , xlim = c(startYear,endYear)
+#           , ylim = c(0,1)
+#           , col = 'cyan'
+#           , ylab = 'Intervention'
+#           , xlab = 'Year'
+#           , bty = 'L'
+#     )
+#     if(input$cMax4 == 0|input$cRate4 == 0){
+#       mtext('No intervention implemented.',3,-1,col='cyan')
+#     }
+#   }
+# },width=580)
 
 ```
 
@@ -702,11 +704,11 @@ sidebarPanel(
               min = 0,
               max = 10,
               value = 1,
-              step = 0.05),
+              step = 0.5),
   sliderInput('cHalf4',
               div(HTML('Year intervention reached half effectiveness:')),
               min = 1985,
-              max = 2005,
+              max = 2015,
               value = 1990,
               step = 1),
   sliderInput('a4',
@@ -718,9 +720,180 @@ sidebarPanel(
   sliderInput('lambda4',
               div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
-              max = 0.9,
+              max = 3,
               value = 0.9,
               step = 0.05),
+  width = 10
+)
+```
+</div>
+</div>
+
+### Model 5
+
+<div class="row" vertical-align="bottom">
+<div class="col-lg-1">
+</div>
+<div class="col-lg-11">
+
+```{r}
+model5 <- function(t,y,parms){
+  with(c(as.list(y),parms),{
+    N <- sum(y)
+    I <- I1 + I2 + I3 + I4
+    
+    lambdaHat <- lambda*exp(-a*I/N)
+    mortResponse <- exp(-q*mu*I4/N)
+    FOI <- mortResponse*lambdaHat*I/N
+    
+    g <- 4*delta
+    
+    dSdt <- b*N - FOI*S - mu*S
+    dI1dt <- FOI*S - g*I1 - mu*I1
+    dI2dt <- g*I1 - g*I2 - mu*I2
+    dI3dt <- g*I2 - g*I3 - mu*I3
+    dI4dt <- g*I3 - g*I4 - mu*I4
+    
+    list(c(dSdt,dI1dt,dI2dt,dI3dt,dI4dt))
+  })
+}
+```
+
+```{r, echo=FALSE}
+img(src = "Diagram5.png", width = '80%', align='center')
+```
+</div>
+<div class="col-lg-12">
+
+#### Instructions
+
+The reduction in transmission could be due to a strong intervention, as we saw in Model 4, or it could just be that as people become aware of AIDS deaths, they are likely to change their behaviour to reduce their personal risk. We'll now implement a phenomenological representation of this type of behaviour change, where transmission risk decreases exponentially with instantaneous observed AIDS-related mortality (see inset above). 
+
+9. **Investigate the new model structure.**
+- Make sure you understand what the parameter $q$ means. Where in the code is this behvioural response to mortality represented?
+10. **Run the model and compare the model predictions to ANC data.**
+- Click on the "Show model output" button to the right below.
+- The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
+- Try varying the value of $q$ to see if you can get a good fit to the prevalence data. You may have to play with the values of $\lambda$, $a$, and $p_0$ as well. In particular, you will have to make $a$ much smaller. This tells us that both $a$ and $q$ are helping to bring the prevalence down.
+
+We see that we can get an equally good fit by assuming that the behaviour change is a response to AIDS deaths, rather than the effect of an explicit intervention. But there is a big difference in the predicted dynamics. In the long term, this version of the model predicts that the prevalence should rise again, whereas Model 4 predicted that the prevalence should keep declining. What do you think underlies this difference in model predictions? You might also want to compare the incidence in the two models. What do you think is going on, and which model do you think will do a better job of accurately predicting future prevalence trends?
+
+_If you have time, you may now move on to examining one of the other datasets._
+
+</div>
+</div>
+
+<div class="row" vertical-align="bottom">
+<div class="col-lg-7">
+```{r,eval=FALSE}
+par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+plot(year,prevalence
+     , pch = 16
+     , cex = 1.8
+     , col = 'green'
+     , ylim = c(0,0.4)
+     , xlim = c(startYear,endYear)
+     , bty = 'L'
+     , xlab = 'Year', ylab = 'Prevalence'
+     , main = paste('HIV prevalence in',input$useSite)
+)
+points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  attach(hivdat)
+  with(.selectSite(input$useSite),{
+    if(input$runButton5==0){
+      par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+      plot(year,prevalence
+           , pch = 16
+           , cex = 1.8
+           , col = 'green'
+           , ylim = c(0,0.4)
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Prevalence'
+           , main = paste('HIV prevalence in',input$useSite)
+      )
+      points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(-input$p05),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model5
+                               , parms = c(b = 0.029
+                                           , a = input$a5
+                                           , mu = 0.018
+                                           , lambda = input$lambda5
+                                           , delta = 0.1
+                                           , q = input$q5
+                                           , p0 = input$p05
+                               )
+                               , rtol = 10E-20
+                               , atol = 10E-20
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      inc <- input$lambda5*traj$I*traj$S/(traj$I+traj$S)*exp(-input$a5*traj$I/(traj$I+traj$S))
+      inc <- inc * exp(-input$q5*0.018*traj$I4/(traj$S+traj$I))
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(year,prevalence
+           , pch = 16
+           , cex = 1.8
+           , col = 'green'
+           , ylim = c(0,0.4)
+           , xlim = c(startYear,endYear)
+           , bty = 'u'
+           , xlab = 'Year', ylab = 'Prevalence'
+           , main = paste('HIV prevalence in',input$useSite)
+      )
+      points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+      lines(traj$time,traj$I/(traj$I+traj$S),col='darkgreen')
+      axis(4,seq(0,0.025,.005)*.4/.025,seq(0,0.025,.005))
+      mtext('Annual per capita incidence & mortality',4,line=2.5,cex=1.5)
+      lines(traj$time,inc*.4/.025,col='darkred')
+      lines(traj$time,0.1*4*traj$I4/(traj$I+traj$S)*.4/.025,col='darkblue')
+      legend('topleft',c('Prevalence','Incidence','Mortality'),pch=NULL,lty=NULL,bty='n',cex=2,text.col=c('darkgreen','darkred','darkblue'))
+    }
+  })
+},width=580)
+```
+
+</div>
+<div class="col-lg-5">
+
+#### Parameters and initial conditions:
+```{r, echo=FALSE}
+sidebarPanel(
+  actionButton("runButton5","Show model output",width = "100%"),
+  br(),
+  br(),
+  sliderInput('q5',
+              div(HTML('Effect of behavior change in response to mortality:')),
+              min = 0,
+              max = 150,
+              value = 0,
+              step = 1),
+  sliderInput('a5',
+              div(HTML('Rate of decline as a function of prevalence (a):')),
+              min = 0,
+              max = 20,
+              value = 8,
+              step = 0.5),
+  sliderInput('lambda5',
+              div(HTML('Effective contact rate (&lambda;):')),
+              min = 0,
+              max = 3,
+              value = 0.5,
+              step = 0.05),
+    sliderInput('p05',
+              'Natural log of the intial infection prevalence ($p_0$:',
+              min = -10,
+              max = -3,
+              value = -7,
+              step = 0.5),
   width = 10
 )
 ```
