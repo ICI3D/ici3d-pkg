@@ -172,7 +172,7 @@ sidebarPanel(
   br(),
   br(),
   sliderInput('lambda',
-              div(HTML('Rate at which new infections occur (&lambda;):')),
+              div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
               max = 0.6,
               value = 0.5,
@@ -250,7 +250,7 @@ For Model 1, we found that the prevalence always remained much too high relative
 - We can never get the prevalence curve to peak and then come down.
 - Nevertheless, if we set $a$ to about 8, we can bring the prevalence down to about the right level. Do this, and then change the values of $\lambda$ and $b$ to see how well you can fit the initial rise of infection.
 
-Looking at the graph, we see that the mortality precisely follows the trend in prevalence while we know that there should be a delay between the rise in prevalence and the rise in mortality. The reason the mortality curve tracks the prevalence curve is that we have assumed a constant _per capita_ death rate for infected individuals, whereas we know that probability of dying after HIV infection increases with the time since infection. Next, we will modify the model to account for this delay in mortality.
+Looking at the graph, we see that the mortality precisely follows the trend in prevalence while we know that there should be a delay between the rise in prevalence and the rise in mortality. The reason the mortality curve tracks the prevalence curve is that we have assumed a constant _per capita_ death rate for infected individuals, whereas we know that probability of dying after HIV infection increases with the time since infection. Next, we will modify the model to account for this delay.
 
 _You can now move on to Model 3._
 
@@ -332,7 +332,7 @@ img(src = "Diagram2.png", width = '80%', align='center')
 #### Parameters and initial conditions:
 ```{r, echo=FALSE}
 sidebarPanel(
-  actionButton("runButton2","Show model output (see plot above)",width = "100%"),
+  actionButton("runButton2","Show model output",width = "100%"),
   br(),
   br(),
   sliderInput('a',
@@ -342,7 +342,7 @@ sidebarPanel(
               value = 0,
               step = 0.5),
   sliderInput('lambda2',
-              div(HTML('Rate at which new infections occur (&lambda;):')),
+              div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
               max = 0.6,
               value = 0.5,
@@ -399,14 +399,15 @@ img(src = "Diagram3.png", width = '80%', align='center')
 
 #### Instructions
 
-The easiest way to delay mortality in the model is to modify the way we represent the course of infection. Instead of having a single infected compartment, we can introduce additional compartments that infected individuals must flow through before they can die of AIDS. This changes the survival curve to look much more like the observed survival curve (see the inset on the model diagram figure).
+The easiest way to get the right shape for the survival curve is to modify the way we represent the course of infection. Instead of having a single infected compartment, we can introduce additional compartments that infected individuals must flow through before they can die of AIDS. This changes the survival curve to look much more like the observed survival curve (see the inset on the model diagram figure).
 
 5. **Investigate the new model structure.**
+- This model structure adds three additional stages of infection. In each of these three stages, people enter from the previous stage at rate $g$ and exit to the next stage at rate $g$. We also let the mortality depend on the total rate at which people exit the fourth stage, rather than the first stage. Where does each of these changes appear in the model code?
 - Make sure you understand what each of the parameters means. Why do we set $g=4\delta$?
-- What is the effect of this delay on the timing of the rise in mortality reltaive to the timing of the rise in prevalence?
 6. **Run the model and compare the model predictions to ANC data.**
 - Click on the "Show model output" button to the right below.
 - The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
+- What is the effect of adding the delay in AIDS-related death on the relative timing of the rises in mortality and prevalence?
 - Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
 - Try changing the values of $a$ and $\lambda$ to see how well you can now fit the initial rise of infection.
 
@@ -494,7 +495,7 @@ renderPlot({
 #### Parameters and initial conditions:
 ```{r, echo=FALSE}
 sidebarPanel(
-  actionButton("runButton3","Show model output (see plot above)",width = "100%"),
+  actionButton("runButton3","Show model output",width = "100%"),
   br(),
   br(),
   sliderInput('a3',
@@ -504,7 +505,7 @@ sidebarPanel(
               value = 8,
               step = 0.5),
   sliderInput('lambda3',
-              div(HTML('Rate at which new infections occur (&lambda;):')),
+              div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
               max = 0.6,
               value = 0.5,
