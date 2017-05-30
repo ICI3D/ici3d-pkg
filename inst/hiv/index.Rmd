@@ -70,17 +70,18 @@ model1 <- function(t,y,parms){
 
 #### Instructions
 
-The basic model structure is shown in the diagram to the right. You can view/hide the code used to produce the plot or specify the model by toggling the associated **Code** button.
+The basic model structure is shown in the diagram to the right. You can view/hide the code used to specify the model or to produce the plot (below) by toggling the associated **Code** button.
 
 1. **Investigate the model structure.**
-- Make sure you understand what each of the parameters means.
+- Make sure you understand what each of the parameters means. What are the units for each?
 - Where in the model code does it show that the instantaneous rate of change of the susceptible compartment is calculated as the total birth rate, minus the background mortality rate, minus incidence? How would you express this as a differential equation?
 - How is the incidence of infection calculated, and how would you write this as a mathematical expression?
 - Where in the code does it show that the instantaneous rate of change of the infectious compartment is calculated as incidence of infection, minus the background mortality rate, minus the total rate at which infected individuals die of AIDS?
 - How is the total mortality rate for infectious individuals calculated, and how would you write this as a mathematical expression?
+- Now look at the plot below. The estimated HIV infection prevalence (based on ANC data) is shown as green points.
 2. **Run the model and compare the model predictions to the ANC data.**
-- In the plot to the left, the estimated HIV infection prevalence (based on ANC data) is shown as green points.
-- The model prediction for the trajectory of HIV prevalence is shown in dark green.
+- Click on the "Show model output" button to the right.
+- The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
 - Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
 - The model prediction based on the default parameter values and initial conditions is very bad.
 - Try adjusting the parameter values by setting $\lambda$ to 0.4 and 0.6 and by setting the natural log of initial prevalence to be -6 and -9.
@@ -161,12 +162,13 @@ renderPlot({
 <div class="col-lg-5">
 ```{r, echo=FALSE}
 img(src = "Diagram1.png", width = '80%', align='center')
+```
 
+#### Parameters and initial conditions:
 
-#### Parameters and initial conditions
 ```{r, echo=FALSE}
 sidebarPanel(
-  actionButton("runButton1","Show model output (see plot above)",width = "100%"),
+  actionButton("runButton1","Show model output",width = "100%"),
   br(),
   br(),
   sliderInput('lambda',
@@ -202,17 +204,6 @@ sidebarPanel(
   width = 10
 )
 ```
-```
-</div>
-</div>
-
-<div class="row" vertical-align="top">
-<div class="col-lg-7">
-
-
-</div>
-<div class="col-lg-5" align="left">
-
 </div>
 </div>
 
@@ -221,20 +212,8 @@ sidebarPanel(
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
+
+
 </div>
 <div class="col-lg-5">
 ```{r}
@@ -255,6 +234,41 @@ model2 <- function(t,y,parms){
 </div>
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
+
+#### Instructions
+
+For Model 1, we found that the prevalence always remained much too high relative to the decline observed in the data. Since some people are likely to have lots of sex, and get infected quickly, while others are likely to have no sex, and never get infected, we may want to modify the model to reflect this heterogeniety in infection risk. There are many ways we could do this, but one of the simplest options -- as described in Jonathan's heterogeneity lecture -- is to define the transmission coefficient as a function of infection prevalence; here, we use the functional form $\hat{\lambda} = \lambda e^{-aP}$, where $a$ is a parameter that determines how rapidly transmisison declines as a function of prevalence and $P = \frac{I}{N}$ is the prevalence of infection.
+
+3. **Investigate the new model structure.**
+- Make sure you understand what each of the parameters means. What are the units of each?
+- Where in the model code is the hetergeneity represented?
+4. **Run the model and compare the model predictions to ANC data.**
+- Click on the "Show model output" button to the right.
+- The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
+- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
+- Try adjusting the value of $a$ to see if you can improve the fit.
+- We can never get the prevalence curve to peak and then come down.
+- Nevertheless, if we set $a$ to about 8, we can bring the prevalence down to about the right level. Do this, and then change the values of $\lambda$ and $b$ to see how well you can fit the initial rise of infection.
+
+Looking at the graph, we see that the mortality precisely follows the trend in prevalence while we know that there should be a delay between the rise in prevalence and the rise in mortality. The reason the mortality curve tracks the prevalence curve is that we have assumed a constant _per capita_ death rate for infected individuals, whereas we know that probability of dying after HIV infection increases with the time since infection. Next, we will modify the model to account for this delay in mortality.
+
+_You can now move on to Model 3._
+
+```{r,eval=FALSE}
+par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+plot(year,prevalence
+     , pch = 16
+     , cex = 1.8
+     , col = 'green'
+     , ylim = c(0,0.4)
+     , xlim = c(startYear,endYear)
+     , bty = 'L'
+     , xlab = 'Year', ylab = 'Prevalence'
+     , main = paste('HIV prevalence in',input$useSite)
+)
+points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+```
+
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   attach(hivdat)
@@ -314,33 +328,8 @@ renderPlot({
 ```{r, echo=FALSE}
 img(src = "Diagram2.png", width = '80%', align='center')
 ```
-</div>
-</div>
 
-<div class="row" vertical-align="top">
-<div class="col-lg-7">
-
-#### Instructions
-
-For Model 1, we found that the prevalence always remained much too high relative to the decline observed in the data. Since some people are likely to have lots of sex, and get infected quickly, while others are likely to have no sex, and never get infected, we may want to modify the model to reflect this heterogeniety in infection risk. There are many ways we could do this, but one of the simplest options -- as described in Jonathan's heterogeneity lecture -- is to define the transmission coefficient as a function of infection prevalence; here, we use the functional form $\hat{\lambda} = \lambda e^{-aP}$, where $a$ is a parameter that determines how rapidly transmisison declines as a function of prevalence and $P = \frac{I}{N}$ is the prevalence of infection.
-
-3. Investigate the new model structure.
-- Make sure you understand what each of the parameters means.
-- Where in the model code is the hetergeneity represented?
-4. Run the model and compare the model predictions to ANC data.
-- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
-- Try adjusting the value of $a$ to see if you can improve the fit.
-- We can never get the prevalence curve to peak and then come down.
-- Nevertheless, if we set $a$ to about 8, we can bring the prevalence down to about the right level. Do this, and then change the values of $\lambda$ and $b$ to see how well you can fit the initial rise of infection.
-
-Looking at the graph, we see that the mortality precisely follows the trend in prevalence while we know that there should be a delay between the rise in prevalence and the rise in mortality. The reason the mortality curve tracks the prevalence curve is that we have assumed a constant _per capita_ death rate for infected individuals, whereas we know that probability of dying after HIV infection increases with the time since infection. Next, we will modify the model to account for this delay in mortality.
-
-_You can now move on to Model 3._
-
-</div>
-<div class="col-lg-5" align="left">
-
-#### Parameters and initial conditions
+#### Parameters and initial conditions:
 ```{r, echo=FALSE}
 sidebarPanel(
   actionButton("runButton2","Show model output (see plot above)",width = "100%"),
@@ -367,6 +356,7 @@ sidebarPanel(
   width = 10
 )
 ```
+
 </div>
 </div>
 
@@ -375,23 +365,10 @@ sidebarPanel(
 ### Model 3
 
 <div class="row" vertical-align="bottom">
-<div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
+<div class="col-lg-1">
 </div>
-<div class="col-lg-5">
+<div class="col-lg-11">
+
 ```{r}
 model3 <- function(t,y,parms){
   with(c(as.list(y),parms),{
@@ -413,11 +390,48 @@ model3 <- function(t,y,parms){
   })
 }
 ```
+
+```{r, echo=FALSE}
+img(src = "Diagram3.png", width = '80%', align='center')
+```
+</div>
+<div class="col-lg-12">
+
+#### Instructions
+
+The easiest way to delay mortality in the model is to modify the way we represent the course of infection. Instead of having a single infected compartment, we can introduce additional compartments that infected individuals must flow through before they can die of AIDS. This changes the survival curve to look much more like the observed survival curve (see the inset on the model diagram figure).
+
+5. **Investigate the new model structure.**
+- Make sure you understand what each of the parameters means. Why do we set $g=4\delta$?
+- What is the effect of this delay on the timing of the rise in mortality reltaive to the timing of the rise in prevalence?
+6. **Run the model and compare the model predictions to ANC data.**
+- Click on the "Show model output" button to the right below.
+- The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
+- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
+- Try changing the values of $a$ and $\lambda$ to see how well you can now fit the initial rise of infection.
+
+We still cannot fit the decline in prevalence but at least we know that AIDS deaths are not sufficient to bring about the decline. What other real-world processes might need to be added to the model world in order to explain the observed decline in prevalence?
+
 </div>
 </div>
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
+```{r,eval=FALSE}
+par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+plot(year,prevalence
+     , pch = 16
+     , cex = 1.8
+     , col = 'green'
+     , ylim = c(0,0.4)
+     , xlim = c(startYear,endYear)
+     , bty = 'L'
+     , xlab = 'Year', ylab = 'Prevalence'
+     , main = paste('HIV prevalence in',input$useSite)
+)
+points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+```
+
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   attach(hivdat)
@@ -475,32 +489,9 @@ renderPlot({
 ```
 </div>
 <div class="col-lg-5">
-```{r, echo=FALSE}
-img(src = "Diagram3.png", width = '80%', align='center')
-```
-</div>
-</div>
 
-<div class="row" vertical-align="top">
-<div class="col-lg-7">
 
-#### Instructions
-
-The easiest way to delay mortality in the model is to modify the way we represent the course of infection. Instead of having a single infected compartment, we can introduce additional compartments that infected individuals must flow through before they can die of AIDS. This changes the survival curve to look much more like the observed survival curve (see the inset on the model diagram figure).
-
-5. Investigate the new model structure.
-- Make sure you understand what each of the parameters means. Why do we set $g=4\delta$?
-- What is the effect of this delay on the timing of the rise in mortality reltaive to the timing of the rise in prevalence?
-6. Run the model and compare the model predictions to ANC data.
-- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
-- Try changing the values of $a$ and $\lambda$ to see how well you can fit the initial rise of infection.
-
-We still cannot fit the decline in prevalence but at least we know that AIDS deaths are not sufficient to bring about the decline. What other real-world processes might need to be added to the model world in order to explain the observed decline in prevalence?
-
-</div>
-<div class="col-lg-5" align="left">
-
-#### Parameters and initial conditions
+#### Parameters and initial conditions:
 ```{r, echo=FALSE}
 sidebarPanel(
   actionButton("runButton3","Show model output (see plot above)",width = "100%"),
