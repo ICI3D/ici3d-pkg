@@ -820,7 +820,7 @@ renderPlot({
     }else{
       require(deSolve)
       
-      inits <- c(S=1,I1=exp(-input$p05),I2=0,I3=0,I4=0)
+      inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model5
@@ -830,10 +830,8 @@ renderPlot({
                                            , lambda = input$lambda5
                                            , delta = 0.1
                                            , q = input$q5
-                                           , p0 = input$p05
                                )
                                , rtol = 10E-20
-                               , atol = 10E-20
       ))
       traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
       inc <- input$lambda5*traj$I*traj$S/(traj$I+traj$S)*exp(-input$a5*traj$I/(traj$I+traj$S))
