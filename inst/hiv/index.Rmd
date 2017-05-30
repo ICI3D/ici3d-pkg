@@ -1,7 +1,7 @@
 ---
-title: "HIV in Harare tutorial"
-subtitle: "International Clinics on Infectious Disease Dynamics and Data Program"
-author: "Based on the spreadsheet tutorial by BG Williams and JW Hargrove<br><br>Juliet R.C. Pulliam, 2016<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
+title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='http://www.ici3d.org/assets/img/logo/ici3d-logo-nav.png' title='SACEMA' width = '300'></a><br><br>HIV in Harare tutorial"
+subtitle: "Based on the spreadsheet tutorial by BG Williams and JW Hargrove"
+author: "<br>Juliet R.C. Pulliam &amp; Carl A.B. Pearson, 2016-2017<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
 output:
   html_document:
     theme: spacelab
@@ -11,13 +11,13 @@ runtime: shiny
 
 ```{r, echo=FALSE, message=FALSE}
 hivdat <- system.file("hiv", "HIVtutorial.Rdata", package="DAIDD")
-sim.end.year <- 2025
+endYear <- 2025
 ```
 
 ```{r, echo=FALSE, message=FALSE}
 require(deSolve)
-sim.start.year <- 1975
-sim.end.year <- 2025
+startYear <- 1975
+endYear <- 2025
 ```
 <br>
 
@@ -27,7 +27,7 @@ sim.end.year <- 2025
 <div class="row">
 <div class="col-lg-8" padding="10px">
 
-In this tutorial, we will fit a series of models with different model structures to HIV prevalence data from antenatal clinics (ANC data). **You should first complete the tutorial using the Harare data. If you have time, you can then move on to repeat the exercise with one of the other datasets.** In this tutorial, we'll fit the data _by eye_, which is not a very rigorous approach but is a good way to develop an intution for the model-fitting process. 
+In this tutorial, we will fit a series of models with different model structures to HIV prevalence data from antenatal clinics (ANC data). **You should first complete the tutorial using the Harare data. If you have time, you can then move on to repeat the exercise with one of the other datasets.** In this tutorial, we'll fit the data _by eye_, which is not a very rigorous approach but is a good way to develop an intution for the model-fitting process. Please scroll down for detailed instructions.
 </div>
 
 <div class="col-lg-4">
@@ -47,20 +47,7 @@ inputPanel(
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,1)
-     , xlim = c(sim.start.year,sim.end.year)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
+
 </div>
 <div class="col-lg-5">
 ```{r}
@@ -70,7 +57,7 @@ model1 <- function(t,y,parms){
     FOI <- lambda*I/N
     
     dSdt <- b*N - FOI*S - mu*S
-    dIdt <- FOI*S - delta*I - mu*I
+    dIdt <- FOI*S - mu*I - delta*I
     
     list(c(dSdt,dIdt))
   })
@@ -80,6 +67,43 @@ model1 <- function(t,y,parms){
 </div>
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
+
+#### Instructions
+
+The basic model structure is shown in the diagram to the right. You can view/hide the code used to produce the plot or specify the model by toggling the associated **Code** button.
+
+1. **Investigate the model structure.**
+- Make sure you understand what each of the parameters means.
+- Where in the model code does it show that the instantaneous rate of change of the susceptible compartment is calculated as the total birth rate, minus the background mortality rate, minus incidence? How would you express this as a differential equation?
+- How is the incidence of infection calculated, and how would you write this as a mathematical expression?
+- Where in the code does it show that the instantaneous rate of change of the infectious compartment is calculated as incidence of infection, minus the background mortality rate, minus the total rate at which infected individuals die of AIDS?
+- How is the total mortality rate for infectious individuals calculated, and how would you write this as a mathematical expression?
+2. **Run the model and compare the model predictions to the ANC data.**
+- In the plot to the left, the estimated HIV infection prevalence (based on ANC data) is shown as green points.
+- The model prediction for the trajectory of HIV prevalence is shown in dark green.
+- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
+- The model prediction based on the default parameter values and initial conditions is very bad.
+- Try adjusting the parameter values by setting $\lambda$ to 0.4 and 0.6 and by setting the natural log of initial prevalence to be -6 and -9.
+- No matter what values we use for the model parameters, the model prediction does not look like the data: the prevalence is always much too high and the population crashes.
+- Continue to adjust the parameters and initial conditions until you're convinced the model will not fit the data. 
+
+_You can now move on to Model 2._
+
+```{r,eval=FALSE}
+par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+plot(year,prevalence
+     , pch = 16
+     , cex = 1.8
+     , col = 'green'
+     , ylim = c(0,1)
+     , xlim = c(startYear,endYear)
+     , bty = 'L'
+     , xlab = 'Year', ylab = 'Prevalence'
+     , main = paste('HIV prevalence in',input$useSite)
+)
+points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
+```
+
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   attach(hivdat)
@@ -91,7 +115,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,1)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -102,7 +126,7 @@ renderPlot({
       
       inits <- c(S=1,I=exp(input$p0))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,sim.end.year,0.1)
+                               , times = seq(1976,endYear,0.1)
                                , func = model1
                                , parms = c(b = input$birthRate
                                            , mu = input$mu
@@ -116,7 +140,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,1)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -132,39 +156,12 @@ renderPlot({
   })
 },width=580)
 ```
+
 </div>
 <div class="col-lg-5">
 ```{r, echo=FALSE}
 img(src = "Diagram1.png", width = '80%', align='center')
-```
-</div>
-</div>
 
-<div class="row" vertical-align="top">
-<div class="col-lg-7">
-
-#### Instructions
-
-The basic model structure is shown in the diagram to the right above. You can view/hide the code used to produce the plot or specify the model by toggling the associated **Code** button.
-
-1. Investigate the model structure.
-- Make sure you understand what each of the parameters means.
-- Where in the model code does it show that the instantaneous rate of change of the susceptible compartment is calculated as the total birth rate, minus the _per capita_ background death rate, minus incidence? How would you express this as a differential equation?
-- How is the incidence of infection calculated, and how would you write this as a mathematical expression?
-- Where in the code does it show that the instantaneous rate of change of the infectious compartment is calculated as incidence of infection, minus the background mortality rate, minus the total rate at which infected individuals die of AIDS?
-- How is the total mortality rate for infectious individuals calculated, and how would you write this as a mathematical expression?
-2. Run the model and compare the model predictions to ANC data.
-- In the plot to the left, the estimated HIV infection prevalence (based on ANC data) is shown as green points.
-- The model prediction for the trajectory of HIV prevalence is shown in dark green.
-- Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
-- The model prediction based on the default parameter values and initial conditions is very bad.
-- Try adjusting the parameter values by setting $\lambda$ to 0.4 and 0.6 and by setting the natural log of initial prevalence to be -6 and -9.
-- No matter what values we use for the model parameters, the model prediction does not look like the data: the prevalence is always much too high and the population crashes.
-- Continue to adjust the parameters and initial conditions until you're convinced the model will not fit the data. 
-
-_You can now move on to Model 2._
-</div>
-<div class="col-lg-5" align="left">
 
 #### Parameters and initial conditions
 ```{r, echo=FALSE}
@@ -205,6 +202,17 @@ sidebarPanel(
   width = 10
 )
 ```
+```
+</div>
+</div>
+
+<div class="row" vertical-align="top">
+<div class="col-lg-7">
+
+
+</div>
+<div class="col-lg-5" align="left">
+
 </div>
 </div>
 
@@ -220,7 +228,7 @@ plot(year,prevalence
      , cex = 1.8
      , col = 'green'
      , ylim = c(0,0.4)
-     , xlim = c(sim.start.year,sim.end.year)
+     , xlim = c(startYear,endYear)
      , bty = 'L'
      , xlab = 'Year', ylab = 'Prevalence'
      , main = paste('HIV prevalence in',input$useSite)
@@ -258,7 +266,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -269,7 +277,7 @@ renderPlot({
       
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,sim.end.year,0.1)
+                               , times = seq(1976,endYear,0.1)
                                , func = model2
                                , parms = c(b = input$birthRate2
                                            , a = input$a
@@ -284,7 +292,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -375,7 +383,7 @@ plot(year,prevalence
      , cex = 1.8
      , col = 'green'
      , ylim = c(0,0.4)
-     , xlim = c(sim.start.year,sim.end.year)
+     , xlim = c(startYear,endYear)
      , bty = 'L'
      , xlab = 'Year', ylab = 'Prevalence'
      , main = paste('HIV prevalence in',input$useSite)
@@ -421,7 +429,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'L'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
@@ -432,7 +440,7 @@ renderPlot({
       
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,sim.end.year,0.1)
+                               , times = seq(1976,endYear,0.1)
                                , func = model3
                                , parms = c(b = 0.029
                                            , a = input$a3
@@ -449,7 +457,7 @@ renderPlot({
            , cex = 1.8
            , col = 'green'
            , ylim = c(0,0.4)
-           , xlim = c(sim.start.year,sim.end.year)
+           , xlim = c(startYear,endYear)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
            , main = paste('HIV prevalence in',input$useSite)
