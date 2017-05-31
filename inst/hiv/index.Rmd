@@ -651,35 +651,23 @@ renderPlot({
 ```
 
 ```{r, echo=FALSE, message=FALSE}
-# renderPlot({
-#   ff <- Vectorize(function(tt){
-#     input$cMax4/(1+exp(-input$cRate4*(tt-input$cHalf)))
-#   })
-#   if(input$runButton4==0){
-#     par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-#     curve(ff(x)
-#           , xlim = c(startYear,endYear)
-#           , ylim = c(0,1)
-#           , col = 'cyan'
-#           , ylab = 'Intervention'
-#           , xlab = 'Year'
-#           , bty = 'L'
-#     )
-#   }else{
-#     par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-#     curve(ff(x)
-#           , xlim = c(startYear,endYear)
-#           , ylim = c(0,1)
-#           , col = 'cyan'
-#           , ylab = 'Intervention'
-#           , xlab = 'Year'
-#           , bty = 'L'
-#     )
-#     if(input$cMax4 == 0|input$cRate4 == 0){
-#       mtext('No intervention implemented.',3,-1,col='cyan')
-#     }
-#   }
-# },width=580)
+renderPlot({
+  ff <- Vectorize(function(tt,cMax,cRate,cHalf){
+    cMax/(1+exp(-cRate*(tt-cHalf)))
+  })
+    par(mar=c(6,5,4,1),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+    curve(ff(x,input$cMax4,input$cRate4,input$cHalf4)
+          , xlim = c(startYear,endYear)
+          , ylim = c(0,1)
+          , col = 'cyan'
+          , ylab = 'Intervention'
+          , xlab = 'Year'
+          , bty = 'L'
+    )
+    if(input$cMax4 == 0|input$cRate4 == 0){
+      mtext('No intervention implemented.',3,-1,col='cyan',cex=1.4)
+    }
+},width=580)
 
 ```
 
