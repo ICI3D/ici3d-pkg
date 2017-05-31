@@ -746,10 +746,11 @@ model5 <- function(t,y,parms){
     I <- I1 + I2 + I3 + I4
     
     lambdaHat <- lambda*exp(-a*I/N)
-    mortResponse <- exp(-q*mu*I4/N)
-    FOI <- mortResponse*lambdaHat*I/N
-    
+
     g <- 4*delta
+
+    mortResponse <- exp(-q*g*I4/N)
+    FOI <- mortResponse*lambdaHat*I/N
     
     dSdt <- b*N - FOI*S - mu*S
     dI1dt <- FOI*S - g*I1 - mu*I1
@@ -881,9 +882,9 @@ sidebarPanel(
   sliderInput('a5',
               div(HTML('Rate of decline as a function of prevalence (a):')),
               min = 0,
-              max = 20,
+              max = 8,
               value = 8,
-              step = 0.5),
+              step = 0.02),
   sliderInput('lambda5',
               div(HTML('Effective contact rate (&lambda;):')),
               min = 0,
