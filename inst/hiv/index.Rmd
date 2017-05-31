@@ -845,8 +845,7 @@ renderPlot({
            , pch = 16
            , cex = 1.8
            , col = 'green'
-#           , ylim = c(0,0.4)
-           , ylim = c(0,1)
+           , ylim = c(0,0.4)
            , xlim = c(startYear,endYear)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
