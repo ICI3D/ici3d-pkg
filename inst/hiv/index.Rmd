@@ -562,7 +562,7 @@ The easiest way to add a control intervention is to assume that the control take
 8. **Run the model and compare the model predictions to ANC data.**
 - Click on the "Show model output" button to the right below.
 - The model's prediction for the trajectory of HIV prevalence is now shown in dark green on the plot below. Mortality (blue) and incidence (red) trajectories are also shown.
-- The small graph below shows the intervention as a function of time. You can vary the intervention paramters to view their effect.
+- The lower graph below shows the intervention as a function of time. You can vary the intervention paramters to view their effect.
 - Try varying the effectiveness of the intervention to see if you can get a good fit to the data.
 - Also try adjusting the other paramters. What paramter combination gives the best fit to the data? Think about how to interpret these parameters. Do they seem plausible in the real world? Why or why not?
 
@@ -650,6 +650,23 @@ renderPlot({
 },width=580)
 ```
 
+```{r, eval=FALSE}
+ff <- Vectorize(function(tt,cMax,cRate,cHalf){
+  cMax/(1+exp(-cRate*(tt-cHalf)))
+})
+par(mar=c(6,5,4,1),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
+curve(ff(x,input$cMax4,input$cRate4,input$cHalf4)
+      , xlim = c(startYear,endYear)
+      , ylim = c(0,1)
+      , ylab = 'Intervention strength'
+      , xlab = 'Year'
+      , bty = 'L'
+)
+if(input$cMax4 == 0|input$cRate4 == 0){
+  mtext('No intervention implemented.',3,-1,col='dark grey',cex=2)
+}
+```
+
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   ff <- Vectorize(function(tt,cMax,cRate,cHalf){
@@ -667,7 +684,6 @@ renderPlot({
       mtext('No intervention implemented.',3,-1,col='dark grey',cex=2)
     }
 },width=580)
-
 ```
 
 
