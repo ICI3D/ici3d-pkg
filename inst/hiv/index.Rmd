@@ -841,7 +841,8 @@ renderPlot({
            , pch = 16
            , cex = 1.8
            , col = 'green'
-           , ylim = c(0,0.4)
+#           , ylim = c(0,0.4)
+           , ylim = c(0,1)
            , xlim = c(startYear,endYear)
            , bty = 'u'
            , xlab = 'Year', ylab = 'Prevalence'
@@ -871,7 +872,7 @@ sidebarPanel(
   sliderInput('q5',
               div(HTML('Effect of behavior change in response to mortality:')),
               min = 0,
-              max = 150,
+              max = 450,
               value = 0,
               step = 1),
   sliderInput('a5',
@@ -887,7 +888,7 @@ sidebarPanel(
               value = 0.5,
               step = 0.05),
     sliderInput('p05',
-              'Natural log of the intial infection prevalence ($p_0$:',
+              'Natural log of the intial infection prevalence:',
               min = -10,
               max = -3,
               value = -7,
