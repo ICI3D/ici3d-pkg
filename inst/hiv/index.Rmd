@@ -10,14 +10,15 @@ runtime: shiny
 ---
 
 ```{r, echo=FALSE, message=FALSE}
-hivdat <- system.file("hiv", "HIVtutorial.Rdata", package="DAIDD")
-endYear <- 2025
+hivdat <- system.file("hiv", "HIVtutorial.Rdata", package="ICI3D")
 ```
 
 ```{r, echo=FALSE, message=FALSE}
 require(deSolve)
 startYear <- 1975
 endYear <- 2025
+setB <- 0.029
+setMu <- 0.018
 ```
 <br>
 
@@ -106,9 +107,6 @@ points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
 ```
 
 ```{r, echo=FALSE, message=FALSE}
-setB <- 0.029
-setMu <- 0.018
-
 renderPlot({
   attach(hivdat)
   with(.selectSite(input$useSite),{
