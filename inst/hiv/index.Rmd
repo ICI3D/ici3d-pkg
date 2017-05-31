@@ -106,6 +106,9 @@ points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
 ```
 
 ```{r, echo=FALSE, message=FALSE}
+setB <- 0.029
+setMu <- 0.018
+
 renderPlot({
   attach(hivdat)
   with(.selectSite(input$useSite),{
@@ -127,7 +130,7 @@ renderPlot({
       
       inits <- c(S=1,I=exp(input$p0))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,endYear,0.1)
+                               , times = seq(startYear,endYear,0.1)
                                , func = model1
                                , parms = c(b = input$birthRate
                                            , mu = input$mu
@@ -187,7 +190,7 @@ sidebarPanel(
               div(HTML('Per capita birth rate (b):')),
               min = 0.01,
               max = 0.04,
-              value = 0.029,
+              value = setB,
               step = 0.001),
   sliderInput('delta',
               div(HTML('Per capita disease-induced mortality rate (&delta;):')),
@@ -199,7 +202,7 @@ sidebarPanel(
               div(HTML('Per capita background mortality rate (&mu;):')),
               min = 0.01,
               max = 0.04,
-              value = 0.018,
+              value = setMu,
               step = 0.001),
   width = 10
 )
@@ -291,11 +294,11 @@ renderPlot({
       
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,endYear,0.1)
+                               , times = seq(startYear,endYear,0.1)
                                , func = model2
                                , parms = c(b = input$birthRate2
                                            , a = input$a
-                                           , mu = 0.018
+                                           , mu = setMu
                                            , lambda = input$lambda2
                                            , delta = 0.1
                                )
@@ -351,7 +354,7 @@ sidebarPanel(
               div(HTML('Per capita birth rate (b):')),
               min = 0.01,
               max = 0.04,
-              value = 0.029,
+              value = setB,
               step = 0.001),
   width = 10
 )
@@ -455,11 +458,11 @@ renderPlot({
       
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
-                               , times = seq(1976,endYear,0.1)
+                               , times = seq(startYear,endYear,0.1)
                                , func = model3
-                               , parms = c(b = 0.029
+                               , parms = c(b = setB
                                            , a = input$a3
-                                           , mu = 0.018
+                                           , mu = setMu
                                            , lambda = input$lambda3
                                            , delta = 0.1
                                )
@@ -614,9 +617,9 @@ renderPlot({
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model4
-                               , parms = c(b = 0.029
+                               , parms = c(b = setB
                                            , a = input$a4
-                                           , mu = 0.018
+                                           , mu = setMu
                                            , lambda = input$lambda4
                                            , delta = 0.1
                                            , cMax = input$cMax4
@@ -828,9 +831,9 @@ renderPlot({
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model5
-                               , parms = c(b = 0.029
+                               , parms = c(b = setB
                                            , a = input$a5
-                                           , mu = 0.018
+                                           , mu = setMu
                                            , lambda = input$lambda5
                                            , delta = 0.1
                                            , q = input$q5
@@ -839,7 +842,7 @@ renderPlot({
       ))
       traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
       inc <- input$lambda5*traj$I*traj$S/(traj$I+traj$S)*exp(-input$a5*traj$I/(traj$I+traj$S))
-      inc <- inc * exp(-input$q5*0.018*traj$I4/(traj$S+traj$I))
+      inc <- inc * exp(-input$q5*setMu*traj$I4/(traj$S+traj$I))
       par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
       plot(year,prevalence
            , pch = 16
