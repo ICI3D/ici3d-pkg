@@ -1,5 +1,5 @@
 ---
-title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='http://www.ici3d.org/assets/img/logo/ici3d-logo-nav.png' title='ICI3D' width = '300'></a><br><br>HIV in Harare tutorial"
+title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='ici3d-logo-nav.png' title='ICI3D' width = '300'></a><br><br>HIV in Harare tutorial"
 subtitle: "Based on the spreadsheet tutorial by BG Williams and JW Hargrove"
 author: "<br>Juliet R.C. Pulliam &amp; Carl A.B. Pearson, 2016-2017<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
 output:
