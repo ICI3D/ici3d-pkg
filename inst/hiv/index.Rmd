@@ -1,5 +1,5 @@
 ---
-title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='http://www.ici3d.org/assets/img/logo/ici3d-logo-nav.png' title='SACEMA' width = '300'></a><br><br>HIV in Harare tutorial"
+title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='http://www.ici3d.org/assets/img/logo/ici3d-logo-nav.png' title='ICI3D' width = '300'></a><br><br>HIV in Harare tutorial"
 subtitle: "Based on the spreadsheet tutorial by BG Williams and JW Hargrove"
 author: "<br>Juliet R.C. Pulliam &amp; Carl A.B. Pearson, 2016-2017<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
 output:
@@ -156,6 +156,40 @@ renderPlot({
       lines(traj$time,input$lambda*traj$I*traj$S/(traj$I+traj$S),col='darkred')
       lines(traj$time,input$delta*traj$I/(traj$I+traj$S),col='darkblue')
       legend('topleft',c('Prevalence','Incidence','Mortality'),pch=NULL,lty=NULL,bty='n',cex=2,text.col=c('darkgreen','darkred','darkblue'))
+    }
+  })
+},width=580)
+```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton1==0){
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I=exp(input$p0))
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model1
+                               , parms = c(b = input$birthRate
+                                           , mu = input$mu
+                                           , lambda = input$lambda
+                                           , delta = input$delta
+                               )
+      ))
+      relPop <- (traj$I+traj$S)/sum(inits)
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,relPop
+           , type = 'l'
+           , cex = 1.8
+           , col = 'black'
+           , ylim = c(0,max(relPop))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Relative population'
+           , main = paste('Relative population in',input$useSite)
+      )
     }
   })
 },width=580)
@@ -326,6 +360,42 @@ renderPlot({
   })
 },width=580)
 ```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton2==0){
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I=exp(-7))
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model2
+                               , parms = c(b = input$birthRate2
+                                           , a = input$a
+                                           , mu = setMu
+                                           , lambda = input$lambda2
+                                           , delta = setDelta
+                               )
+      ))
+      relPop <- (traj$I+traj$S)/sum(inits)
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,relPop
+           , type = 'l'
+           , cex = 1.8
+           , col = 'black'
+           , ylim = c(0,max(relPop))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Relative population'
+           , main = paste('Relative population in',input$useSite)
+      )
+    }
+  })
+},width=580)
+```
+
 </div>
 <div class="col-lg-5">
 ```{r, echo=FALSE}
@@ -491,6 +561,43 @@ renderPlot({
   })
 },width=580)
 ```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton3==0){
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model3
+                               , parms = c(b = setB
+                                           , a = input$a3
+                                           , mu = setMu
+                                           , lambda = input$lambda3
+                                           , delta = setDelta
+                               )
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      relPop <- (traj$I+traj$S)/sum(inits)
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,relPop
+           , type = 'l'
+           , cex = 1.8
+           , col = 'black'
+           , ylim = c(0,max(relPop))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Relative population'
+           , main = paste('Relative population in',input$useSite)
+      )
+    }
+  })
+},width=580)
+```
+
 </div>
 <div class="col-lg-5">
 
@@ -689,6 +796,44 @@ renderPlot({
 },width=580)
 ```
 
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton4==0){
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model4
+                               , parms = c(b = setB
+                                           , a = input$a4
+                                           , mu = setMu
+                                           , lambda = input$lambda4
+                                           , delta = setDelta
+                                           , cMax = input$cMax4
+                                           , cRate = input$cRate4
+                                           , cHalf = input$cHalf4
+                               )
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      relPop <- (traj$I+traj$S)/sum(inits)
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,relPop
+           , type = 'l'
+           , cex = 1.8
+           , col = 'black'
+           , ylim = c(0,max(relPop))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Relative population'
+           , main = paste('Relative population in',input$useSite)
+      )
+    }
+  })
+},width=580)
+```
 
 </div>
 <div class="col-lg-5">
@@ -866,6 +1011,45 @@ renderPlot({
 },width=580)
 ```
 
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton5==0){
+    }else{
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model5
+                               , parms = c(b = setB
+                                           , a = input$a5
+                                           , mu = setMu
+                                           , lambda = input$lambda5
+                                           , delta = setDelta
+                                           , q = input$q5
+                               )
+                               , rtol = 10E-20
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      relPop <- (traj$I+traj$S)/sum(inits)
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,relPop
+           , type = 'l'
+           , cex = 1.8
+           , col = 'black'
+           , ylim = c(0,max(relPop))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year', ylab = 'Relative population'
+           , main = paste('Relative population in',input$useSite)
+      )
+    }
+  })
+},width=580)
+```
+
 </div>
 <div class="col-lg-5">
 
@@ -876,7 +1060,7 @@ sidebarPanel(
   br(),
   br(),
   sliderInput('q5',
-              div(HTML('Effect of behavior change in response to mortality:')),
+              div(HTML('Effect of behavior change in response to mortality (q):')),
               min = 0,
               max = 450,
               value = 0,
