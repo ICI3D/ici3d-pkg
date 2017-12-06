@@ -88,7 +88,7 @@ The basic model structure is shown in the diagram to the right. You can view/hid
 - Visually compare the model prediction to the available data. Does the model do a good job of predicting the data?
 - The model prediction based on the default parameter values and initial conditions is very bad.
 - Try adjusting the parameter values by setting $\lambda$ to 0.4 and 0.6 and by setting the natural log of initial prevalence to be -6 and -9.
-- No matter what values we use for the model parameters, the model prediction does not look like the data: the prevalence is always much too high and the population crashes.
+- No matter what values we use for the model parameters, the model prediction does not look like the data: the prevalence is always much too high and the population crashes (see bottom panel, below the main plot).
 - Continue to adjust the parameters and initial conditions until you're convinced the model will not fit the data. 
 
 _You can now move on to Model 2._
@@ -164,8 +164,7 @@ renderPlot({
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   with(.selectSite(input$useSite),{
-    if(input$runButton1==0){
-    }else{
+    if(input$runButton1>0){
       require(deSolve)
       
       inits <- c(S=1,I=exp(input$p0))
@@ -291,21 +290,6 @@ Looking at the graph, we see that the mortality precisely follows the trend in p
 
 _You can now move on to Model 3._
 
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
-
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   attach(hivdat)
@@ -364,8 +348,41 @@ renderPlot({
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
   with(.selectSite(input$useSite),{
-    if(input$runButton2==0){
-    }else{
+    if(input$runButton2>0){
+      require(deSolve)
+      
+      inits <- c(S=1,I=exp(-7))
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model2
+                               , parms = c(b = input$birthRate2
+                                           , a = input$a
+                                           , mu = setMu
+                                           , lambda = input$lambda2
+                                           , delta = setDelta
+                               )
+      ))
+      lambdaHat <- input$lambda2*exp(-input$a*traj$I/(traj$I+traj$S))
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,lambdaHat
+           , type = 'l'
+           , col = 'black'
+           , ylim = c(0,max(lambdaHat))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year'
+           , ylab = expression(hat(lambda))
+           , main = 'Transmission coefficient'
+      )
+    }
+  })
+},width=580)
+```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton2>0){
       require(deSolve)
       
       inits <- c(S=1,I=exp(-7))
@@ -430,6 +447,23 @@ sidebarPanel(
 )
 ```
 
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  par(mar=c(5,5,2,9),cex.axis=2,cex.lab=2,cex.main=1.5,lwd=4)
+  curve(exp(-input$a*x)
+       , col = 'red'
+       , xlim = c(0,0.3)
+       , ylim = c(0,1)
+       , ylab = 'Relative transmisison'
+       , xlab = 'Prevalence'
+       , bty = 'L'
+  )
+  if(input$a == 0){
+    mtext('No heterogeneity in sexual behavior.',3,0.5,col='dark grey',cex=2)
+  }
+},width=580)
+```
+
 </div>
 </div>
 
@@ -491,20 +525,6 @@ _You can now move on to Model 4._
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
 
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
@@ -557,6 +577,41 @@ renderPlot({
       lines(traj$time,inc*.4/.025,col='darkred')
       lines(traj$time,setDelta*setBoxes*traj$I4/(traj$I+traj$S)*.4/.025,col='darkblue')
       legend('topleft',c('Prevalence','Incidence','Mortality'),pch=NULL,lty=NULL,bty='n',cex=2,text.col=c('darkgreen','darkred','darkblue'))
+    }
+  })
+},width=580)
+```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton3>0){
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model3
+                               , parms = c(b = setB
+                                           , a = input$a3
+                                           , mu = setMu
+                                           , lambda = input$lambda3
+                                           , delta = setDelta
+                               )
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      lambdaHat <- input$lambda3*exp(-input$a3*traj$I/(traj$I+traj$S))
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,lambdaHat
+           , type = 'l'
+           , col = 'black'
+           , ylim = c(0,max(lambdaHat))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year'
+           , ylab = expression(hat(lambda))
+           , main = 'Transmission coefficient'
+      )
     }
   })
 },width=580)
@@ -622,6 +677,23 @@ sidebarPanel(
   width = 10
 )
 ```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  par(mar=c(5,5,2,9),cex.axis=2,cex.lab=2,cex.main=1.5,lwd=4)
+  curve(exp(-input$a3*x)
+       , col = 'red'
+       , xlim = c(0,0.3)
+       , ylim = c(0,1)
+       , ylab = 'Relative transmisison'
+       , xlab = 'Prevalence'
+       , bty = 'L'
+  )
+  if(input$a3 == 0){
+    mtext('No heterogeneity in sexual behavior.',3,0.5,col='dark grey',cex=2)
+  }
+},width=580)
+```
 </div>
 </div>
 
@@ -685,20 +757,6 @@ _You can now move on to Model 5._
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
 
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
@@ -764,16 +822,29 @@ renderPlot({
 ff <- Vectorize(function(tt,cMax,cRate,cHalf){
   cMax/(1+exp(-cRate*(tt-cHalf)))
 })
-par(mar=c(6,5,4,1),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-curve(ff(x,input$cMax4,input$cRate4,input$cHalf4)
-      , xlim = c(startYear,endYear)
-      , ylim = c(0,1)
-      , ylab = 'Intervention strength'
-      , xlab = 'Year'
-      , bty = 'L'
+timePts <- seq(startYear,endYear,length.out = 101)
+intStrength <- ff(timePts
+                  , cMax = input$cMax4
+                  , cRate = input$cRate4
+                  , cHalf = input$cHalf4
+                  )
+par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+plot(timePts,intStrength
+     , type = 'l'
+     , xlim = c(startYear,endYear)
+     , ylim = c(0,1)
+     , ylab = 'Intervention strength'
+     , xlab = 'Year'
+     , bty = 'u'
 )
+lines(timePts,1-intStrength
+      , add = T
+      , col = 'red'
+)
+axis(4,seq(0,1,.2),col='red',lwd=4)
+mtext('Relative transmission',4,line=2.5,cex=1.5,col='red')
 if(input$cMax4 == 0|input$cRate4 == 0){
-  mtext('No intervention implemented.',3,-1,col='dark grey',cex=2)
+  mtext('No intervention implemented.',3,0,col='dark grey',cex=2)
 }
 ```
 
@@ -782,17 +853,65 @@ renderPlot({
   ff <- Vectorize(function(tt,cMax,cRate,cHalf){
     cMax/(1+exp(-cRate*(tt-cHalf)))
   })
-    par(mar=c(6,5,4,1),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-    curve(ff(x,input$cMax4,input$cRate4,input$cHalf4)
-          , xlim = c(startYear,endYear)
-          , ylim = c(0,1)
-          , ylab = 'Intervention strength'
-          , xlab = 'Year'
-          , bty = 'L'
-    )
-    if(input$cMax4 == 0|input$cRate4 == 0){
-      mtext('No intervention implemented.',3,-1,col='dark grey',cex=2)
+  timePts <- seq(startYear,endYear,length.out = 101)
+  intStrength <- ff(timePts,input$cMax4,input$cRate4,input$cHalf4)
+  par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+  plot(timePts,intStrength
+       , type = 'l'
+       , xlim = c(startYear,endYear)
+       , ylim = c(0,1)
+       , ylab = 'Intervention strength'
+       , xlab = 'Year'
+       , bty = 'u'
+  )
+  lines(timePts,1-intStrength
+        , add = T
+        , col = 'red'
+  )
+  axis(4,seq(0,1,.2),col='red',lwd=4,yaxs='i')
+  mtext('Relative transmission',4,line=2.5,cex=1.5,col='red',col.axis = 'red')
+  if(input$cMax4 == 0|input$cRate4 == 0){
+    mtext('No intervention implemented.',3,0,col='dark grey',cex=2)
+  }
+},width=580)
+```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton4>0){
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model4
+                               , parms = c(b = setB
+                                           , a = input$a4
+                                           , mu = setMu
+                                           , lambda = input$lambda4
+                                           , delta = setDelta
+                                           , cMax = input$cMax4
+                                           , cRate = input$cRate4
+                                           , cHalf = input$cHalf4
+                               )
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      lambdaHat <- input$lambda4*exp(-input$a4*traj$I/(traj$I+traj$S))
+      lambdaTilde <- lambdaHat*(1 - input$cMax4/(1+exp(-input$cRate4*(traj$time-input$cHalf4))))
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,lambdaTilde
+           , type = 'l'
+           , col = 'black'
+           , ylim = c(0,max(lambdaTilde))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year'
+           , ylab = expression(tilde(lambda))
+           , main = 'Transmission coefficient'
+      )
     }
+  })
 },width=580)
 ```
 
@@ -877,6 +996,24 @@ sidebarPanel(
   width = 10
 )
 ```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  par(mar=c(5,5,2,9),cex.axis=2,cex.lab=2,cex.main=1.5,lwd=4)
+  curve(exp(-input$a4*x)
+       , col = 'red'
+       , xlim = c(0,0.3)
+       , ylim = c(0,1)
+       , ylab = 'Relative transmisison'
+       , xlab = 'Prevalence'
+       , bty = 'L'
+  )
+  if(input$a4 == 0){
+    mtext('No heterogeneity in sexual behavior.',3,0.5,col='dark grey',cex=2)
+  }
+},width=580)
+```
+
 </div>
 </div>
 
@@ -937,20 +1074,6 @@ _If you have time, you may now move on to examining one of the other datasets._
 
 <div class="row" vertical-align="bottom">
 <div class="col-lg-7">
-```{r,eval=FALSE}
-par(mar=c(6,5,4,0),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=3)
-plot(year,prevalence
-     , pch = 16
-     , cex = 1.8
-     , col = 'green'
-     , ylim = c(0,0.4)
-     , xlim = c(startYear,endYear)
-     , bty = 'L'
-     , xlab = 'Year', ylab = 'Prevalence'
-     , main = paste('HIV prevalence in',input$useSite)
-)
-points(year,prevalence,cex=1.8,lwd=2,col='darkgreen')
-```
 
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
@@ -1011,6 +1134,43 @@ renderPlot({
 },width=580)
 ```
 
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  with(.selectSite(input$useSite),{
+    if(input$runButton5>0){
+      require(deSolve)
+      
+      inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
+      traj <- data.frame(lsoda(y = inits
+                               , times = seq(startYear,endYear,0.1)
+                               , func = model5
+                               , parms = c(b = setB
+                                           , a = input$a5
+                                           , mu = setMu
+                                           , lambda = input$lambda5
+                                           , delta = setDelta
+                                           , q = input$q5
+                               )
+                               , rtol = 10E-20
+      ))
+      traj$I <- traj$I1+traj$I2+traj$I3+traj$I4
+      lambdaHat <- input$lambda5*exp(-input$a5*traj$I/(traj$I+traj$S))
+      lambdaStar <- lambdaHat * exp(-input$q5*setMu*traj$I4/(traj$S+traj$I))
+      par(mar=c(6,5,4,4),cex.axis=1.5,cex.lab=1.5,cex.main=1.5,lwd=4)
+      plot(traj$time,lambdaStar
+           , type = 'l'
+           , col = 'black'
+           , ylim = c(0,max(lambdaStar))
+           , xlim = c(startYear,endYear)
+           , bty = 'L'
+           , xlab = 'Year'
+           , ylab = expression(paste(lambda,'*'))
+           , main = 'Transmission coefficient'
+      )
+    }
+  })
+},width=580)
+```
 
 ```{r, echo=FALSE, message=FALSE}
 renderPlot({
@@ -1086,6 +1246,24 @@ sidebarPanel(
   width = 10
 )
 ```
+
+```{r, echo=FALSE, message=FALSE}
+renderPlot({
+  par(mar=c(5,5,2,9),cex.axis=2,cex.lab=2,cex.main=1.5,lwd=4)
+  curve(exp(-input$q5*x)
+       , col = 'red'
+       , xlim = c(0,0.025)
+       , ylim = c(0,1)
+       , ylab = 'Relative transmisison'
+       , xlab = 'Annual per capita mortality'
+       , bty = 'L'
+  )
+  if(input$q5 == 0){
+    mtext('No response to mortality.',3,0.5,col='dark grey',cex=2)
+  }
+},width=580)
+```
+
 </div>
 </div>
 
