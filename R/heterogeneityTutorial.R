@@ -206,8 +206,8 @@ het.ui <- shinyUI({
   titlePanel('Heterogeneity Tutorial'),
   navlistPanel(
     tabPanel('Overview', includeMarkdown("inst/hetTut/overview.md"), br()),
-    tabPanel('Parts 1 & 2: Low Variance',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part1.md"))),
+    tabPanel('Part 1: Low Variance',
+      fluidRow(column(12, includeMarkdown("inst/hetTut/low.md"))),
       fluidRow(
         column(3, numericInput("part1samples", label = "Add runs:", value = 1, min = 1, max = 50, step = 1)),
         column(3, actionButton("part1click", "Run")),
@@ -220,8 +220,8 @@ het.ui <- shinyUI({
       fluidRow(column(12, includeMarkdown("inst/hetTut/part2.md"))),
       br()
     ),
-    tabPanel('Part 3: Changing Variance and Population',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part3.md"))),
+    tabPanel('Part 2: Changing Variance and Population',
+      fluidRow(column(12, includeMarkdown("inst/hetTut/variance.md"))),
       fluidRow(column(3, numericInput(
           "part3var",
           label = "Variance?",
@@ -246,8 +246,8 @@ het.ui <- shinyUI({
       ),
       br()
     ),
-    tabPanel('Part 4: Heterogeneity & R0',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part4.md"))),
+    tabPanel('Part 3: Heterogeneity & R0',
+      fluidRow(column(12, includeMarkdown("inst/hetTut/R0.md"))),
       fluidRow(
         column(3,numericInput(
           "part5bmn",
