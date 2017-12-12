@@ -209,15 +209,15 @@ het.ui <- shinyUI({
     tabPanel('Part 1: Low Variance',
       fluidRow(column(12, includeMarkdown("inst/hetTut/low.md"))),
       fluidRow(
-        column(3, numericInput("part1samples", label = "Add runs:", value = 1, min = 1, max = 50, step = 1)),
-        column(3, actionButton("part1click", "Run")),
-        column(3, textOutput("part1runs", inline = T)),
-        column(3, textOutput("part1TODO", inline = T))
+        column(3, numericInput("lowsamples", label = "Add runs:", value = 1, min = 1, max = 50, step = 1)),
+        column(3, actionButton("lowclick", "Run")),
+        column(3, textOutput("lowruns", inline = T)),
+        column(3, textOutput("lowTODO", inline = T))
       ),
       fluidRow(
-        column(4, plotOutput("part1hist")), column(4, plotOutput("part1series")), column(4, plotOutput("part1sizes"))
+        column(4, plotOutput("lowhist")), column(4, plotOutput("lowseries")), column(4, plotOutput("lowsizes"))
       ),
-      fluidRow(column(12, includeMarkdown("inst/hetTut/part2.md"))),
+      fluidRow(column(12, includeMarkdown("inst/hetTut/more.md"))),
       br()
     ),
     tabPanel('Part 2: Changing Variance and Population',
@@ -300,7 +300,7 @@ emptyseries <- data.table(
 )
 emptydistro <- data.table(runid=integer(), cumulativeI=integer())
 
-part1mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
+lowmxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
 
 allowedIterations <- 100
 
@@ -318,15 +318,15 @@ het.server <- shinyServer({
   function(input, output, session) {
 
     cycleTracking <- reactiveValues(
-      part1was = 0, part1cycles = 0,
+      lowwas = 0, lowcycles = 0,
       part34was = 0, part34cycles = 0,
       part5was = 0, part5cycles = 0
     )
 
     rvs <- reactiveValues(
-      part1series = emptyseries,
-      part1distro = emptydistro,
-      part1index = 0,
+      lowseries = emptyseries,
+      lowdistro = emptydistro,
+      lowindex = 0,
       part34mxdst = het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001),
       part34distro = emptydistro,
       part34series = emptyseries,
@@ -338,30 +338,30 @@ het.server <- shinyServer({
 
     observe({
 
-      if (input$part1click - isolate(cycleTracking$part1was)) {
-        cycleTracking$part1cycles <- isolate(input$part1samples)
-        cycleTracking$part1was <- input$part1click
+      if (input$lowclick - isolate(cycleTracking$lowwas)) {
+        cycleTracking$lowcycles <- isolate(input$lowsamples)
+        cycleTracking$lowwas <- input$lowclick
       }
 
       # depend on all buttons
       # lock all buttons
 
       # do part 12 heavy lifting, if there are cycles available & there's work to do
-      isolate(if (cycleTracking$part1cycles) {
+      isolate(if (cycleTracking$lowcycles) {
 
-          addedts <- het.epidemic.runs(part1mxdst, rvs$part1index, end.time = 10, gmma = 1)
+          addedts <- het.epidemic.runs(lowmxdst, rvs$lowindex, end.time = 10, gmma = 1)
 
-          rvs$part1series <- updateSeries(rvs$part1series, addedts)
-          rvs$part1distro <- rbind(
-            rvs$part1distro,
+          rvs$lowseries <- updateSeries(rvs$lowseries, addedts)
+          rvs$lowdistro <- rbind(
+            rvs$lowdistro,
             addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
           )
-          # if done, rvs$part1TODO <- FALSE
-          rvs$part1index <- rvs$part1index + 1
-          cycleTracking$part1cycles <- cycleTracking$part1cycles - 1
+          # if done, rvs$lowTODO <- FALSE
+          rvs$lowindex <- rvs$lowindex + 1
+          cycleTracking$lowcycles <- cycleTracking$lowcycles - 1
       })
 
-      if (isolate(cycleTracking$part1cycles)) invalidateLater(0, session)
+      if (isolate(cycleTracking$lowcycles)) invalidateLater(0, session)
     })
 
     observe({
@@ -372,7 +372,7 @@ het.server <- shinyServer({
       rvs$part34distro  <- emptydistro
     })
 
-    if (!isolate(cycleTracking$part1cycles)) observe({
+    if (!isolate(cycleTracking$lowcycles)) observe({
 
       if (input$part34click - isolate(cycleTracking$part34was)) {
         cycleTracking$part34cycles <- part34samples
@@ -410,7 +410,7 @@ het.server <- shinyServer({
       rvs$part5distro  <- emptydistro
     })
 
-    if (!isolate(cycleTracking$part1cycles | cycleTracking$part34cycles)) observe({
+    if (!isolate(cycleTracking$lowcycles | cycleTracking$part34cycles)) observe({
 
       if (isolate(cycleTracking$part5was) != input$part5click) {
         cycleTracking$part5cycles <- isolate(input$part5samples)
@@ -435,13 +435,13 @@ het.server <- shinyServer({
 
     })
 
-    output$part1TODO <- renderText(ifelse(cycleTracking$part1cycles, "Running", ""))
-    output$part1runs <- renderText(sprintf("Total Runs: %d", rvs$part1index))
+    output$lowTODO <- renderText(ifelse(cycleTracking$lowcycles, "Running", ""))
+    output$lowruns <- renderText(sprintf("Total Runs: %d", rvs$lowindex))
 
-    output$part1hist <- renderPlot(het.hist(part1mxdst, beta.mean = 2))
-    output$part1series <- renderPlot(base.het.plot(10, 100, dt=rvs$part1series))
-    output$part1sizes <- renderPlot({
-      if(rvs$part1distro[,.N != 0]) het.runs.hist(rvs$part1distro)
+    output$lowhist <- renderPlot(het.hist(lowmxdst, beta.mean = 2))
+    output$lowseries <- renderPlot(base.het.plot(10, 100, dt=rvs$lowseries))
+    output$lowsizes <- renderPlot({
+      if(rvs$lowdistro[,.N != 0]) het.runs.hist(rvs$lowdistro)
     })
 
     output$part34TODO <- renderText(ifelse(cycleTracking$part34cycles, "Running", ""))
