@@ -1,4 +1,4 @@
-# Part 3: Changing Variance & Population
+# Part 2: Changing Variance & Population
 
 Experimenting: Now we try comparing 30 runs of the same model with the same mean contact rate, but different variance in the contact rate and different populations. 
 
