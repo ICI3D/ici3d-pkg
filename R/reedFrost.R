@@ -29,37 +29,61 @@ sto.rf.run <- function(N, p) {
 
 rf.cols <- c("black","red","blue","green","yellow","purple")
 
-rf.ui <- shinyUI({
-  fluidPage(
-    titlePanel('Reed-Frost Exploration'),
-    navlistPanel(
-      tabPanel('Overview', includeMarkdown("inst/rf/overview.md"), br()),
-      tabPanel('Deterministic Reed-Frost',
-        includeMarkdown("inst/rf/det.md"),
-        numericInput("detN", "Population", value=100, min=10, max=10000, step=1),
-        sliderInput("detp", "Infection Probability", value=0.1, min = 0, max = 0.25, step = 0.001),
-        plotOutput("detpanel"),
-        textOutput("detfsize"),
-        br()
-      ),
-      tabPanel('Stochastic Reed-Frost',
-        includeMarkdown("inst/rf/stoch.md"),
-        numericInput("stochN", "Population", value=100, min=10, max=10000, step=1),
-        sliderInput("stochp", "Infection Probability", value=0.1, min = 0, max = 1, step = 0.001),
-        selectInput("stochcol", "line color",
-          choices=rf.cols,
-          selected = "black"
-        ),
-        actionButton("runstoch","Run"),
-        actionButton("resetstoch","Reset"),
-        plotOutput("stochpanel"),
-        plotOutput("stochfsize"),
-        br()
-      ),
-      widths = c(2, 10)
-    )
-  )
-})
+# rf.ui <- shinyUI({
+#   fluidPage(
+#     titlePanel('Reed-Frost Exploration'),
+#     navlistPanel(
+#       tabPanel('Overview', includeMarkdown("inst/rf/overview.md"), br()),
+#       tabPanel('Deterministic Reed-Frost',
+#         includeMarkdown("inst/rf/det.md"),
+#         numericInput("detN", "Population", value=100, min=10, max=10000, step=1),
+#         sliderInput("detp", "Infection Probability", value=0.1, min = 0, max = 0.25, step = 0.001),
+#         plotOutput("detpanel"),
+#         textOutput("detfsize"),
+#         br()
+#       ),
+#       tabPanel('Stochastic Reed-Frost',
+#         includeMarkdown("inst/rf/stoch.md"),
+#         numericInput("stochN", "Population", value=100, min=10, max=10000, step=1),
+#         sliderInput("stochp", "Infection Probability", value=0.1, min = 0, max = 1, step = 0.001),
+#         selectInput("stochcol", "line color",
+#           choices=rf.cols,
+#           selected = "black"
+#         ),
+#         actionButton("runstoch","Run"),
+#         actionButton("resetstoch","Reset"),
+#         plotOutput("stochpanel"),
+#         plotOutput("stochfsize"),
+#         br()
+#       ),
+#       widths = c(2, 10)
+#     )
+#   )
+# })
+
+rf.ui <- app.ui.generic('Reed-Frost Exploration',
+  tabPanel('Overview', includeMarkdown("inst/rf/overview.md"), br()),
+  tabPanel('Deterministic Reed-Frost',
+    includeMarkdown("inst/rf/det.md"),
+    numericInput("detN", "Population", value=100, min=10, max=10000, step=1),
+    sliderInput("detp", "Infection Probability", value=0.1, min = 0, max = 0.25, step = 0.001),
+    plotOutput("detpanel"),
+    textOutput("detfsize"),
+    br()
+  ),
+  tabPanel('Stochastic Reed-Frost', includeMarkdown("inst/rf/stoch.md"),
+    numericInput("stochN", "Population", value=100, min=10, max=10000, step=1),
+    sliderInput("stochp", "Infection Probability", value=0.1, min = 0, max = 1, step = 0.001),
+    selectInput("stochcol", "line color",
+      choices=rf.cols,
+      selected = "black"
+    ),
+    actionButton("runstoch","Run"),
+    actionButton("resetstoch","Reset"),
+    plotOutput("stochpanel"),
+    plotOutput("stochfsize"),
+    br()
+))
 
 
 # want to update graphics between work

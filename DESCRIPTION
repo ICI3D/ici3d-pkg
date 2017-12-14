@@ -1,15 +1,14 @@
 Package: ICI3D
-Type: Package
-Title: Workshop Materials for the International Clinics on Infectious Disease Dynamics and Data
-    (ICI3D) Program
+Title: Materials for the International Clinics on Infectious Disease Dynamics and Data (ICI3D) Workshops
 Version: 0.2.1
-Author: Carl A. B. Pearson
-Maintainer: Carl A. B. Pearson <cabp@vgrnd.com>
-Description: The ICI3D package provides course material
+Authors@R: c(person("Carl", "Pearson", email="carl.ab.pearson@gmail.com", role=c("aut","cre")),
+  person("International Clinics on Infectious Disease Dynamics and Data", email="admin@ici3d.org", role="cph"))
+Description: The ICI3D package provides course material--data and rshiny demonstration applications--
     for the Clinic on Dynamical Approaches to Infectious Disease Data (DAIDD)
-    and the Clinic on the Meaningful Modeling of Epidemiological Data, run by the ICI3D Program (<www.ici3d.org>).
+    and the Clinic on the Meaningful Modeling of Epidemiological Data (MMED),
+    run by the ICI3D Program (www.ici3d.org).
+Depends: R (>= 3.1.0)
 License: CC BY-SA 4.0
-Encoding: UTF-8
 LazyData: true
 Imports:
     shiny,
