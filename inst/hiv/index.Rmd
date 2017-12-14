@@ -778,7 +778,7 @@ renderPlot({
     }else{
       require(deSolve)
       
-      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model4
@@ -882,7 +882,7 @@ renderPlot({
     if(input$runButton4>0){
       require(deSolve)
       
-      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model4
@@ -922,7 +922,7 @@ renderPlot({
     }else{
       require(deSolve)
       
-      inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
+      inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
                                , func = model4
@@ -993,6 +993,12 @@ sidebarPanel(
               max = 3,
               value = 0.9,
               step = 0.05),
+      sliderInput('p04',
+              'Natural log of the intial infection prevalence:',
+              min = -10,
+              max = -3,
+              value = -7,
+              step = 0.5),
   width = 10
 )
 ```
