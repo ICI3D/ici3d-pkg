@@ -77,7 +77,6 @@ The basic model structure is shown in the diagram to the right. You can view/hid
 
 1. **Investigate the model structure.**
 - Make sure you understand what each of the parameters means. What are the units for each?
-- Where in the model code does it show that the instantaneous rate of change of the susceptible compartment is calculated as the total birth rate, minus the background mortality rate, minus incidence? How would you express this as a differential equation?
 - How is the incidence of infection calculated, and how would you write this as a mathematical expression?
 - Where in the code does it show that the instantaneous rate of change of the infectious compartment is calculated as incidence of infection, minus the background mortality rate, minus the total rate at which infected individuals die of AIDS?
 - How is the total mortality rate for infectious individuals calculated, and how would you write this as a mathematical expression?
