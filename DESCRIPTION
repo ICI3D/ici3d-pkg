@@ -12,7 +12,6 @@ License: CC BY-SA 4.0
 LazyData: true
 Imports:
     shiny,
-    reshape2,
     data.table,
     markdown,
     ggplot2,
@@ -21,6 +20,7 @@ Imports:
     htmltools,
     httpuv,
     xtable,
-    deSolve
+    deSolve,
+    ragg
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
