@@ -15,7 +15,7 @@ het.hist <- function(mxdst, beta.mean, wd = .1) {
   breaks <- seq(0, ceiling(max(mxdst)), by = wd)
   p <- ggplot(data.frame(het = mxdst)) +
     geom_histogram(
-      aes(x=het, y=..density..),
+      aes(x = het, y = after_stat(density)),
       breaks = breaks
     ) + xlab("contact rate (1/day)") +
     geom_vline(xintercept=beta.mean, color="red") +
