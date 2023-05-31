@@ -5,7 +5,7 @@ First, let's run the model with very low variance so we can see what happens in 
 This is the code running behind the scenes:
 
 ```r
-mxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
+mxdst <- het.population(n = 100, beta.mean = 2, beta.var = 0.001)
 het.hist(mxdst, beta.mean)
 het.epidemic(mxdst, runs = 5, end.time = 10, gmma = 1)
 ```

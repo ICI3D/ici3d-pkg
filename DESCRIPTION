@@ -8,6 +8,7 @@ Description: The ICI3D package provides course material--data and rshiny demonst
     and the Clinic on the Meaningful Modeling of Epidemiological Data (MMED),
     run by the ICI3D Program (www.ici3d.org).
 Depends: R (>= 3.1.0)
+Encoding: UTF-8
 License: CC BY-SA 4.0
 LazyData: true
 Imports:
@@ -23,4 +24,4 @@ Imports:
     deSolve,
     ragg
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 7.2.3
