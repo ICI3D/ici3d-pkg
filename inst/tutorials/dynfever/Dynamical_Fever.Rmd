@@ -1,0 +1,234 @@
+---
+title: "Dynamical Fever"
+output:
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+description: >
+  The *Dynamical Fever* exercise used in [DAIDD](https://www.ici3d.org/daidd)
+  and [MMED](https://www.ici3d.org/mmed)
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(ICI3D)
+library(data.table)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  out.width = '100%'
+)
+taryear <- (Sys.Date() |> as.POSIXlt())$year + 1900L + 1L
+taryears <- (-8L:0L) + taryear
+```
+
+## Mission
+
+Since `r taryears[1]`, there have been semi-regular outbreaks of a disease called Dynamical Fever (DF) in Daidd county. DF symptoms appear in both dogs and people, and DF has been a reportable disease since the first case was observed. The Daidd Health Department has hired you: they want you to apply your expertise in infectious diseases and model thinking to help them understand the data they have collected. They also want recommendations for what to do in `r taryear`.
+
+```{r yrall, eval=TRUE, fig.asp=0.25, fig.cap = learnr_caption_counter("Overview of Dynamical Fever Cases in Daidd County.")}
+dynfever_plot_series(dynfever_DAIDD_outbreak, startyear = taryears[1])
+```
+
+## Part 1: Epidemics `r taryears[1:4] |> range() |> paste0(collapse="-")`
+
+### `r taryears[1]`
+ 
+```{r yr1p, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 1)
+```
+
+The Health Department has provided you plots of their historical data. They have recorded outcomes on weekly basis (x axis), from the first full week of each year (week 1, 2, etc) until no cases are recorded for several consecutive weeks. The bar heights correspond to new cases recorded during that week. What do you make of the first year of data?
+
+```{r yr1q}
+quiz(
+  question_radio(
+    sprintf("Do the %s epidemic patterns in dogs and humans seem basically similar or are there important distinction(s)? Discuss with your exercise partner(s).", taryears[1]),
+    answer("Basically the same.", correct = TRUE, message = "Yes: the epidemics have similar durations, totals, peaks, and timing."),
+    answer("Important distinction(s).", message = "No; while the precise outcomes for the two populations are not identical, they are similar.")
+  )
+)
+```
+
+### `r taryears[2]`
+
+Thinking `r taryears[1]` was a one time occurrence, there were no changes to Health Department policy in the intervening period prior to the outbreak in `r taryears[2]`, which had the following outcomes:
+
+```{r yr2p, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 2)
+```
+
+```{r yr2q}
+quiz(
+  question_radio(
+    sprintf("Do the %s and %s patterns seem basically similar or are there important distinction(s)?", taryears[1], taryears[2]),
+    answer("Basically the same.", correct = TRUE, message = "Yes: both years have similar durations, totals, peaks, and timing for both dogs and humans."),
+    answer("Important distinction(s).", message = "No; while the precise outcomes for the two years are not identical, that are similar.")
+  )
+)
+```
+
+### `r taryears[3]`
+
+After two years of outbreaks, the Health Department was beginning to think something might be going on, but they were unable to prepare any responses prior to `r taryears[3]`. However, the reported cases were very different:
+
+```{r yr3p, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 3)
+```
+
+### `r taryears[4]`
+
+Because there were virtually no cases in `r taryears[3]`, the Health Department forgot its previous concerns and once again made no response efforts. But then another large outbreak occurred in `r taryears[4]`:
+
+```{r yr4p, echo=FALSE, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 4)
+```
+
+```{r yr4q}
+quiz(
+  question_freeresponse(
+    sprintf("Based on the data from %s-%s, what have you learned about DF?  What factors might determine the differences in epidemic size and duration from year to year? Is it possible to draw any conclusions about the natural history of the disease? Why might the epidemic die out each spring?", taryears[1], taryears[4]),
+    "Take note of your answers; we will discuss them among the full group."
+  )
+)
+```
+
+## Part 2: Introduction of a veterinary vaccine
+
+A veterinary vaccine against DF had been approved for use in dogs in mid-`r taryears[3]`, but since there was not a problem that year, the Health Department did not promote it. Following the resurgence of DF in `r taryears[3]`, however, the Health Department tried to encourage uptake by sending information on the vaccine to veterinarians and licensed pet owners. By the beginning of `r taryears[5]`, 40 percent of the dog population in Daidd County had been vaccinated.
+
+### `r taryears[5]`
+
+In `r taryears[5]`, a DF outreak still occurred, but looked like:
+
+```{r yr5p, echo=FALSE, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 5)
+```
+
+```{r yr5q}
+quiz(
+  question_freeresponse(
+    sprintf("How does this compare to events in %s-%s?", taryears[1], taryears[4]),
+    sprintf("The %s outbreak had lower peaks, totals, and durations in both populations, compared to previous years _when there was an outbreak_.", taryears[5])
+  )
+)
+```
+
+### `r taryears[6]`
+
+Based on this reported cases in `r taryears[5]`, opinion among Health Department employees was divided on the success of the vaccine. Some employees argued that the vaccine had effectively reduced the number of DF cases, and that the reduction in canine cases due to the vaccine might have indirectly protected people from contracting the disease as well. Other employees pointed out that there were fewer cases in `r taryears[3]`, before the vaccine had been approved, than in `r taryears[5]`. Besides, they argued, how could vaccination of only 40 percent of dogs explain a `r "TODO"` reduction in both canine and human cases. This group concluded that the relatively small number of cases in `r taryears[5]` was probably unrelated to adoption of the vaccine.
+
+Not liking to rock the boat, the Health Department Director ultimately decided to continue the vaccine information campaign for another year and then reassess the situation. The Health Department issued reminder notices to veterinarians and pet owners, and emphasized the need to renewed the vaccine annually. Most veterinarians and people in the community were positive about the vaccine, and people generally said that no vaccinated dogs had gotten sick in `r taryears[5]` with DF (though organized vaccine records did not exist and vaccine status was not collected as part of reporting DF). With this generally more favorable context, by the beginning of `r taryears[6]`, 50 percent of the dog population in Daidd County had been vaccinated.
+
+However, the `r taryears[6]` season did not clarify things for the Director, and the debate within the department only grew more heated, with each side claiming that the `r taryears[6]` data supported their argument:
+
+```{r yr6p, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 6)
+```
+
+```{r yr6q}
+quiz(
+  question_freeresponse(
+    sprintf("What arguments might the groups on each side of the debate make about the %s data? What additional information (other than more years of data) would be useful to help determine to what extent the vaccine is responsible for the differences in the outbreaks observed before and after its introduction?", taryears[6]),
+    "Take note of your answers; we will discuss them among the full group."
+  )
+)
+```
+
+## Part 3: Introduction of a human vaccine
+
+Luckily for the Director of the Health Department, the approval of a human vaccine against DF in mid-`r taryears[6]` meant that he did not have to take a strong stance on the debate over dog vaccination. Instead, he simply redirected funds from the earlier information campaign on dog vaccination to promote human vaccination. By the beginning of `r taryears[7]`, 50 percent of the people in Daidd County had been vaccinated, though dog vaccine uptake fell to 20 percent.
+
+### `r taryears[7]`
+
+Although the `r taryears[7]` season got off to a slow start, the Director was in for a surprise when the outbreak picked up later in the season. By the end, the `r taryears[7]` outbreak was the worst in the past few years, leading to outrage in the community and by mid-June, the Director had had enough and decided step down in order to spend more time with his family and their dogs.
+
+```{r yr7p, echo=FALSE, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 7)
+```
+
+### `r taryears[8]`
+
+After the `r taryears[7]` outbreak debacle, the former Health Department Deputy Director was appointed to Acting Director, and she worked doggedly over the next few months to ensure that as many people in the community were vaccinated in time for `r taryears[8]` as possible. By the beginning of the year, 80 percent of the people in Daidd County had been vaccinated. However, a contamination scare had disrupted the availability of the dog vaccine, and no dogs were vaccinated. The new Acting Director had been among the group of employees that believed the dog vaccine didn't really do much, if anything. She thought that perhaps instead a new, less transmissible strain had probably arisen around the same time as the canine vaccine started to be distributed. She was very surprised to see so many canine cases in Daidd County in `r taryears[8]`, indeed the most cases in dogs yet recorded:
+
+```{r yr8p, echo=FALSE, eval=TRUE}
+dynfever_plot_simple(dynfever_DAIDD_outbreak, sample_id = 8)
+```
+
+## Part 4: Your Recommendations for `r taryear`
+
+Despite the low number of human cases in `r taryears[8]`, the high number of dog cases has the community in an uproar. As a dog lover, the AD is distraught (she tells the local news media in a press-conference), and she informs the public that she is hiring outside expertise to solve the problem.
+
+Having reviewed the past data, enter your recommended targets for vaccine coverage in dogs and humans, then press "Run Recommendation" to see the outcome.
+
+```{r}
+inputPanel(
+  sliderInput("vax_dogs", label = "Vaccination in Dogs:",
+    min = 0.0, max = 1.0, step = 0.01, value = .2
+  ),
+  sliderInput("vax_humans", label = "Vaccination in Humans:",
+    min = 0.0, max = 1.0, step = 0.01, value = .8
+  ),
+  actionButton("run_rec", "Run Recommendation")
+)
+plotOutput("DFplot")
+```
+
+```{r, context="server"}
+recommendPlot <- reactiveVal(dynfever_plot_empty())
+observeEvent(
+  input$run_rec,
+  dynfever_params(
+    vax_humans = input$vax_humans, vax_dogs = input$vax_dogs
+  ) |> dynfever_sample(parms = _) |> dynfever_plot_simple() |> recommendPlot()
+)
+output$DFplot <- renderPlot(recommendPlot())
+```
+
+## Part 5: Behind the Scenes in Daidd County
+
+As you may have guessed, Daidd county and Dynamical Fever represent a model world, not a real place or disease. This model world behaves stochastically. For this exercise, we curated possible outcomes (by trying different random seeds) to get a particular story. In some ways, this story is a bit unlikely! If you happened to try different recommendations, or even the same recommendations multiple times, you probably saw different results, maybe even wildly different ones.
+
+The next figure shows the probability of epidemic outcomes. We sampled for varying levels of vaccine coverage in the populations, one at a time. The following plots show what happens when only one population (dogs or people) is vaccinated, with different levels of coverage. The red dots represent the mean number of cases over 100 runs of the simulation, and the boxes show the middle 50 percent of runs. The thick black horizontal line is the median outbreak size for each intervention.
+
+```{r coverage, echo=FALSE, eval=TRUE}
+# ggplot(dynfever_DAIDD_distros) +
+#   aes(coverage, THING) + facet_grid(vax_pop ~ .) +
+#   geom_point(position = "dodge", alpha = 0.1) +
+#   geom_point(data = \(dt) dt[, .(THING = median(THING)), by = .(vax_pop, ...)]) +
+#   scale_x_continuous("Coverage in ...", expand = c(0, 0)) +
+#   theme_minimal(panel.spacing = unit(1.5, "line"))
+```
+
+!['Dynamical Fever Scenarios'](dfScenarios.png)
+
+```{r freeresponse_5}
+quiz(
+  question_freeresponse(
+    "Why does vaccinating 50 percent of dogs appear to eliminate cases in dogs when vaccinating 50 percent of people only reduces the number of human cases by about 50 percent?",
+    "Lorem ipsum."
+  ),
+  question_freeresponse(
+    "What do you think vaccinating 50 percent of dogs would do to the number of human cases, on average?",
+    "Lorem ipsum."
+  ),
+  question_freeresponse(
+    "What about the effect of vaccinating 50 percent of people on the number of dog cases?",
+    "Lorem ipsum."
+  )
+)
+```
+
+## Notes
+
+This exercise uses a chain binomial simulation model to explore the dynamics and control of an imaginary disease in two populations. The goals of this tutorial were to
+
+  1. help you develop an intuition for how transmission patterns influence the outcome of interventions,
+  2. give you practice in making arguments based on indirect evidence, and
+  3. introduce the concept of a *model world*.
+
+Aside from the interactive section, all of the model outputs here are pre-computed. You can find that data as part of the `ICI3D` package as the data object `dynfever_DAIDD_outbreak` and `dynfever_DAIDD_distros`. The model code for the interactive portion of this tutorial is also part of the `ICI3D` package: the pertinent functions begin with the prefix `dynfever_`. That same code also generates the pre-computed data, and can be found in [the package repository](https://github.com/ICI3D/ici3d-pkg).
+
+This exercise was originally developed by Juliet R. C. Pulliam and subsequently extended and refined by efforts from MMED faculty and participants.
+
+*Some Rights Reserved*  
+*[CC BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/)*

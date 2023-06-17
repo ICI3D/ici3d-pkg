@@ -1,3 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 TODO.md
+^ICI3D\.Rproj$
+^data-raw$
+^data-raw/dynfever$

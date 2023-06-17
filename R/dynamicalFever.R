@@ -219,5 +219,4 @@ df.server <- shinyServer({
 
   }})
 
-#' @export
 dynamicalFever <- function() shinyApp(ui = df.ui, server = df.server)
