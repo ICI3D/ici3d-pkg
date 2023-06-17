@@ -32,3 +32,7 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 .Rproj.user
+
+# Tutorial intermediate products
+inst/tutorials/**/*.html
+inst/tutorials/**/*_files/
