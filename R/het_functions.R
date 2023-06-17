@@ -1,96 +1,169 @@
 #' @import data.table ggplot2 shiny
 NULL
 
-het.population <- function(
-  pop.size, beta.mean, beta.var, seed = 0
+#' @title Heterogeneous Population Generation
+#'
+#' @description Generates a heterogeneous population of contact rates
+#'
+#' @param n an integer: the number of individuals to generate
+#'
+#' @param beta_mean a numeric: the mean contact rate
+#'
+#' @param beta_var a numeric: the variance of the contact rate
+#'
+#' @param seed an integer, optional: the random seed to use (if supplied)
+#'
+#' @return a numeric vector of length `n` of contact rates, sorted in descending
+#' order
+#'
+#' @details This function generates a heterogeneous population of contact rates
+#' using a gamma distribution.  The mean and variance of the distribution are
+#' transformed into the shape and scale parameters for [rgamma()].
+#'
+#' @family heterogeneity
+#'
+#' @examples
+#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
+#' hist(hp)
+#'
+#' @export
+het_population <- function(
+  n, beta_mean, beta_var, seed
 ) {
-  set.seed(seed)
-  theta = beta.var / beta.mean
-  kk = beta.mean / theta
-  mxdst <- rgamma(pop.size, shape = kk, scale = theta)
-  mxdst[rev(order(mxdst))] ## order individuals by riskiness
+  if (!missing(seed)) set.seed(seed)
+  scale <- beta_var / beta_mean
+  shape <- beta_mean / scale
+  rgamma(n, shape = shape, scale = scale) |> order(decreasing = TRUE)
 }
 
-het.hist <- function(mxdst, beta.mean, wd = .1) {
-  breaks <- seq(0, ceiling(max(mxdst)), by = wd)
-  p <- ggplot(data.frame(het = mxdst)) +
+#' @title Heterogeneous Contact Rate Histogram
+#'
+#' @description Plots a histogram of contact rates
+#'
+#' @param contact_rates numeric vector; contact rates to plot, e.g. from
+#' [het_population()]
+#'
+#' @inheritParams het_population
+#' @inheritParams ggplot2::geom_histogram
+#' @inheritDotParams ggplot2::geom_histogram
+#'
+#' @return a ggplot object
+#' @family heterogeneity
+#' @examples
+#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
+#' het_plot_hist(hp, beta_mean = 1)
+#'
+#' @export
+het_plot_hist <- function(
+  contact_rates, beta_mean, binwidth = .1, ...
+) {
+  return(ggplot(data.table(contact_rates = contact_rates)) +
     geom_histogram(
-      aes(x=het, y=..density..),
-      breaks = breaks
+      aes(x = contact_rates, y = after_stat(density)),
+      binwidth = binwidth, ...
     ) + xlab("contact rate (1/day)") +
-    geom_vline(xintercept=beta.mean, color="red") +
+    geom_vline(xintercept = beta_mean, color = "red") +
     theme_bw() + theme(
       panel.border = element_blank(),
-      axis.title = element_text(size=rel(2)),
-      axis.text = element_text(size=rel(2))
-    )
-  p
+      axis.title = element_text(size = rel(2)),
+      axis.text = element_text(size = rel(2))
+  ))
 }
 
-# het.run <- function(rid, mxdst, end.time, gmma, rho) {
-#   set.seed(rid)
-#   pop.size <- length(mxdst)
-#   tloss <- trec <- tinf <- rep(NaN, pop.size)
-#
-#   new.ted <- sample.int(pop.size, 1, prob = mxdst)
-#   new.time <- 0 # first individual is infected at time 0
-#   (( new.time -> tinf[new.ted] ) +
-#       rexp(1, gmma) -> trec[new.ted] ) +
-#         suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
-#   ## initialize time series data frame
-#   ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
-#   next.time <- data.table::copy(ts)
-#   ## calculate current inf rate - should this be changing?  was inside while loop
-#   inf.rate <- mean(mxdst) * pop.size
-#
-#   ## expected samples to get sum(samples) > end.time
-#   # times <- rexp(ceiling(end.time*1.1*inf.rate), inf.rate)
-#   # while (sum(times) < end.time) times <- c(times, rexp(ceiling(end.time*0.1*inf.rate), inf.rate))
-#
-#   while(next.time[, (day < end.time) & (I > 0)]) {
-#     ## Choose potential event time
-#     new.time <- rexp(1, inf.rate) + next.time$day
-#     ## figure out if anyone has recovered between last event and this one; I->R
-#     recoveries <- sum((trec > next.time$day) & (trec < new.time), na.rm = T)
-#     next.time[,`:=`(I=I-recoveries, R=R+recoveries)]
-#     ## figure out if anyone has lost immunity between last event and this one; R->S
-#     who.loss <- which((tloss > next.time$day) & (tloss < new.time))
-#     ilosses <- length(who.loss)
-#     if (ilosses > 0) { # if there are immunity losses...
-#       ## reset tinf, trec, tloss for individuals who lost immunity
-#       tinf[who.loss] <- trec[who.loss] <- tinf[who.loss] <- NaN
-#       ## update R, S counts
-#       next.time[,`:=`(R=R-ilosses, S=S+ilosses)]
-#     }
-#
-#     ## choose infec*tor*
-#     cur.tor <- sample(1:pop.size, 1, prob = mxdst)
-#     ## has this id been infected?
-#     cur.inf <- {
-#       tr <- trec[cur.tor]
-#       !is.nan(tr) & (tr > new.time)
-#     }
-#     # if source infected, then choose (potentially) infec*ted* individual
-#     if(cur.inf) {
-#       # choose from everyone except infec*tor*
-#       new.ted <- sample((1:pop.size)[-cur.tor], 1, prob = mxdst[-cur.tor])
-#       if(is.nan(tinf[new.ted])) { ## is this ID currently susceptible?
-#         ## then infect them
-#         next.time[,`:=`(
-#           cumulativeI = cumulativeI + 1,
-#           S = S - 1, I = I + 1
-#         )]
-#         # infected @ new.time, recover @ infected + recovery draw, loss @ recover + loss draw
-#         (( new.time -> tinf[new.ted] ) +
-#             rexp(1, gmma) -> trec[new.ted] ) +
-#               suppressWarnings(rexp(1, rho)) -> tloss[new.ted]
-#       }
-#     }
-#     ts <- rbind(ts, next.time)
-#     next.time <- data.table::copy(next.time)[, day := new.time ]
-#   }
-#   return(ts[, runid := rid ])
-# }
+#' @title Sample Pairs of Distinct Indices
+#'
+#' @param n positive integer: number of pairs to sample
+#'
+#' @param prob numeric vector: the population weights for sampling each index;
+#' if length(prob) == 1, then treated as the population size and all indices
+#' equally weighted
+#'
+#' @param verbose Print progress messages?
+#'
+#' @return A list with two elements, `source` and `sink`, each of length `n`,
+#' corresponding to the sampled pairs indices
+#'
+#' @family heterogeneity
+#' @examples
+#' draws <- sample_pair(n = 100, prob = 10)
+#'
+#' @export
+sample_pair <- function(n, prob, verbose = FALSE) {
+  if (length(prob) == 1) {
+    sampler <- function(sn) {
+      sample(prob, sn, replace = TRUE)
+    }
+  } else {
+    sampler <- function(sn) {
+      sample(length(prob), sn, replace = TRUE, prob = prob)
+    }
+  }
+  source <- sampler(n)
+  sink <-   sampler(n)
+  redraw <- which(source == sink)
+  while (length(redraw)) {
+    if (verbose) {
+      message(sprintf("sample_pair: redrawing %i ...", length(redraw)))
+    }
+    sink[redraw] <- sampler(length(redraw))
+    redraw <- redraw[which(source[redraw] == sink[redraw])]
+  }
+  return(list(source = source, sink = sink))
+}
+
+#' @title Sample Event Times Until a Maximum Time
+#'
+#' @param maxval a positive numeric: the maximum time to simulate until
+#'
+#' @param meantime a positive numeric: the mean time between events
+#'
+#' @param sampler a function: the sampling distribution for time between events
+#'
+#' @param ... any parameter arguments to `sampler`
+#'
+#' @param oversample a numeric: the amount to oversample by when generating
+#'
+#' @param verbose Print progress messages?
+#'
+#' @return A numeric vector of event times: the cumulative sum of draws from
+#' `sampler` until the last value exceeds `maxval`. That sum is then trimmed to
+#' values `<= maxval`. The first value in the vector is always 0.
+#'
+#' @family heterogeneity
+#' @examples
+#' draws <- sample_until(n = 100, meantime = 1, rexp, rate = 1)
+#' cumsum(draws)
+#'
+#' @export
+sample_until <- function(
+  maxval, meantime, sampler, ...,
+  oversample = 0.1, verbose = FALSE
+) {
+  # generate a vector of interaction times - oversample by 10%
+  expectedevents <- maxval / meantime
+  times <- c(
+    0, cumsum(sampler(ceiling(expectedevents * (1 + oversample)), ...))
+  )
+  # make sure we have enough events - extend by 10% until we do
+  while (times[length(times)] < maxval) {
+    if (verbose) {
+      message(sprintf(
+        "sample_until: current end %d vs maxval %d -> add %i events ...",
+        times[length(times)], maxval, ceiling(expectedevents * oversample)
+      ))
+    }
+    times <- c(
+      times,
+      times[length(times)] +
+        cumsum(sampler(ceiling(expectedevents * oversample), ...))
+    )
+  }
+  # trim off any events that occur after maxval
+  times <- times[times <= maxval]
+
+  return(times)
+}
+
 
 het.run <- function(rid, mxdst, end.time, gmma, rho) {
   set.seed(rid)
@@ -178,7 +251,7 @@ base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day =
 
 
 het.epidemic.runs <- function(
-  mxdst = het.population(pop.size = 300, beta.mean = 1, beta.var = .5),
+  mxdst = het_population(n = 300, beta_mean = 1, beta_var = .5),
   runs,
   gmma = 1, rho = 0, # lose immunity
   end.time = 5, tell.run = NULL
@@ -300,7 +373,7 @@ emptyseries <- data.table(
 )
 emptydistro <- data.table(runid=integer(), cumulativeI=integer())
 
-lowmxdst <- het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001)
+lowmxdst <- het_population(n = 100, beta_mean = 2, beta_var = 0.001)
 
 allowedIterations <- 100
 
@@ -327,7 +400,7 @@ het.server <- shinyServer({
       lowseries = emptyseries,
       lowdistro = emptydistro,
       lowindex = 0,
-      part34mxdst = het.population(pop.size = 100, beta.mean = 2, beta.var = 0.001),
+      part34mxdst = het_population(n = 100, beta_mean = 2, beta_var = 0.001),
       part34distro = emptydistro,
       part34series = emptyseries,
       part34index = 0,
@@ -367,7 +440,7 @@ het.server <- shinyServer({
     observe({
       input$part34click
       rvs$part34index <- 0
-      rvs$part34mxdst   <- het.population(pop.size = isolate(input$part4var), beta.mean = 2, beta.var = isolate(input$part3var))
+      rvs$part34mxdst   <- het_population(n = isolate(input$part4var), beta_mean = 2, beta_var = isolate(input$part3var))
       rvs$part34series  <- emptyseries
       rvs$part34distro  <- emptydistro
     })
@@ -401,10 +474,10 @@ het.server <- shinyServer({
     observe({
       input$part5click
       rvs$part5index <- 0
-      rvs$part5mxdst   <- het.population(
-        pop.size = isolate(input$part5pop),
-        beta.mean = isolate(input$part5bmn),
-        beta.var = isolate(input$part5bvar)
+      rvs$part5mxdst   <- het_population(
+        n = isolate(input$part5pop),
+        beta_mean = isolate(input$part5bmn),
+        beta_var = isolate(input$part5bvar)
       )
       rvs$part5series  <- emptyseries
       rvs$part5distro  <- emptydistro
