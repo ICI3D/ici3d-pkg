@@ -188,18 +188,30 @@ output$DFplot <- renderPlot(recommendPlot())
 
 As you may have guessed, Daidd county and Dynamical Fever represent a model world, not a real place or disease. This model world behaves stochastically. For this exercise, we curated possible outcomes (by trying different random seeds) to get a particular story. In some ways, this story is a bit unlikely! If you happened to try different recommendations, or even the same recommendations multiple times, you probably saw different results, maybe even wildly different ones.
 
-The next figure shows the probability of epidemic outcomes. We sampled for varying levels of vaccine coverage in the populations, one at a time. The following plots show what happens when only one population (dogs or people) is vaccinated, with different levels of coverage. The red dots represent the mean number of cases over 100 runs of the simulation, and the boxes show the middle 50 percent of runs. The thick black horizontal line is the median outbreak size for each intervention.
+The next figure shows the distribution of epidemic outcomes. We sampled for varying levels of vaccine coverage in the populations, one at a time. The following plots show what happens when only one population (dogs or people) is vaccinated, with different levels of coverage. The red dots represent the mean number of cases over 100 runs of the simulation, and the boxes show the middle 50 percent of runs. The red dots are the median outcome size for each level of coverage.
 
 ```{r coverage, echo=FALSE, eval=TRUE}
-# ggplot(dynfever_DAIDD_distros) +
-#   aes(coverage, THING) + facet_grid(vax_pop ~ .) +
-#   geom_point(position = "dodge", alpha = 0.1) +
-#   geom_point(data = \(dt) dt[, .(THING = median(THING)), by = .(vax_pop, ...)]) +
-#   scale_x_continuous("Coverage in ...", expand = c(0, 0)) +
-#   theme_minimal(panel.spacing = unit(1.5, "line"))
+ggplot(dynfever_DAIDD_distros) +
+  aes(vax_cov, count) + facet_grid(
+    pop ~ vax_pop, labeller = labeller(
+      pop = c(h = "People", d = "Dogs"),
+      vax_pop = c(h = "People", d = "Dogs")
+    ),
+    switch = "both"
+  ) +
+  geom_point(position = position_dodge2(width = 0.02), alpha = 0.025) +
+  geom_point(
+    data = \(dt) dt[, .(
+      count = median(count)
+    ), by = .(vax_cov, vax_pop, pop)],
+    color = "red"
+  ) + coord_cartesian(clip = "off") +
+  scale_x_continuous("Coverage in ...", expand = c(0, 0)) +
+  scale_y_continuous("Incidence in ...", expand = c(0, 0)) +
+  theme_minimal() + theme(
+    panel.spacing = unit(1.5, "line"), strip.placement = "inside"
+  )
 ```
-
-!['Dynamical Fever Scenarios'](dfScenarios.png)
 
 ```{r freeresponse_5}
 quiz(
