@@ -511,7 +511,7 @@ het.server <- shinyServer({
     output$lowTODO <- renderText(ifelse(cycleTracking$lowcycles, "Running", ""))
     output$lowruns <- renderText(sprintf("Total Runs: %d", rvs$lowindex))
 
-    output$lowhist <- renderPlot(het.hist(lowmxdst, beta.mean = 2))
+    output$lowhist <- renderPlot(het_plot_hist(lowmxdst, beta_mean = 2))
     output$lowseries <- renderPlot(base.het.plot(10, 100, dt=rvs$lowseries))
     output$lowsizes <- renderPlot({
       if(rvs$lowdistro[,.N != 0]) het.runs.hist(rvs$lowdistro)
@@ -520,7 +520,7 @@ het.server <- shinyServer({
     output$part34TODO <- renderText(ifelse(cycleTracking$part34cycles, "Running", ""))
     output$part34runs <- renderText(sprintf("Total Runs: %d", rvs$part34index))
 
-    output$part34hist <- renderPlot(het.hist(rvs$part34mxdst, beta.mean = 2))
+    output$part34hist <- renderPlot(het_plot_hist(rvs$part34mxdst, beta_mean = 2))
     output$part34series <- renderPlot(base.het.plot(10, isolate(input$part4var), dt=rvs$part34series))
     output$part34sizes <- renderPlot({
       if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part34distro)
@@ -529,7 +529,7 @@ het.server <- shinyServer({
     output$part5TODO <- renderText(ifelse(cycleTracking$part5cycles, "Running", ""))
     output$part5runs <- renderText(sprintf("Total Runs: %d", rvs$part5index))
 
-    output$part5hist <- renderPlot(het.hist(rvs$part5mxdst, beta.mean = isolate(input$part5bmn)))
+    output$part5hist <- renderPlot(het_plot_hist(rvs$part5mxdst, beta_mean = isolate(input$part5bmn)))
     output$part5series <- renderPlot(base.het.plot(10, isolate(input$part5pop), dt=rvs$part5series))
     output$part5sizes <- renderPlot({
       if(rvs$part5distro[,.N != 0]) het.runs.hist(rvs$part5distro)

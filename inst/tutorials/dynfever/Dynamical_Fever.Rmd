@@ -1,5 +1,5 @@
 ---
-title: "Dynamical Fever"
+title: "Dynamical Fever!"
 output:
   learnr::tutorial:
     progressive: true
@@ -13,6 +13,7 @@ description: >
 library(learnr)
 library(ICI3D)
 library(data.table)
+library(ggplot2)
 knitr::opts_chunk$set(
   echo = FALSE,
   out.width = '100%'
@@ -44,7 +45,7 @@ quiz(
   question_radio(
     sprintf("Do the %s epidemic patterns in dogs and humans seem basically similar or are there important distinction(s)? Discuss with your exercise partner(s).", taryears[1]),
     answer("Basically the same.", correct = TRUE, message = "Yes: the epidemics have similar durations, totals, peaks, and timing."),
-    answer("Important distinction(s).", message = "No; while the precise outcomes for the two populations are not identical, they are similar.")
+    answer("Important distinction(s).", message = "No; while the precise outcomes for the two populations are not identical, they have similar end dates, peak incidence (both timing and intensity), and overall totals.")
   )
 )
 ```
@@ -62,7 +63,7 @@ quiz(
   question_radio(
     sprintf("Do the %s and %s patterns seem basically similar or are there important distinction(s)?", taryears[1], taryears[2]),
     answer("Basically the same.", correct = TRUE, message = "Yes: both years have similar durations, totals, peaks, and timing for both dogs and humans."),
-    answer("Important distinction(s).", message = "No; while the precise outcomes for the two years are not identical, that are similar.")
+    answer("Important distinction(s).", message = "No; while the precise outcomes for the two years are not identical, both years, for both populations, have similar end dates, peak incidence (both timing and intensity), and overall totals.")
   )
 )
 ```
@@ -191,41 +192,18 @@ As you may have guessed, Daidd county and Dynamical Fever represent a model worl
 The next figure shows the distribution of epidemic outcomes. We sampled for varying levels of vaccine coverage in the populations, one at a time. The following plots show what happens when only one population (dogs or people) is vaccinated, with different levels of coverage. The red dots represent the mean number of cases over 100 runs of the simulation, and the boxes show the middle 50 percent of runs. The red dots are the median outcome size for each level of coverage.
 
 ```{r coverage, echo=FALSE, eval=TRUE}
-ggplot(dynfever_DAIDD_distros) +
-  aes(vax_cov, count) + facet_grid(
-    pop ~ vax_pop, labeller = labeller(
-      pop = c(h = "People", d = "Dogs"),
-      vax_pop = c(h = "People", d = "Dogs")
-    ),
-    switch = "both"
-  ) +
-  geom_point(position = position_dodge2(width = 0.02), alpha = 0.025) +
-  geom_point(
-    data = \(dt) dt[, .(
-      count = median(count)
-    ), by = .(vax_cov, vax_pop, pop)],
-    color = "red"
-  ) + coord_cartesian(clip = "off") +
-  scale_x_continuous("Coverage in ...", expand = c(0, 0)) +
-  scale_y_continuous("Incidence in ...", expand = c(0, 0)) +
-  theme_minimal() + theme(
-    panel.spacing = unit(1.5, "line"), strip.placement = "inside"
-  )
+dynfever_plot_heatmap(dynfever_DAIDD_distros[vax_pop == pop])
 ```
 
 ```{r freeresponse_5}
 quiz(
   question_freeresponse(
     "Why does vaccinating 50 percent of dogs appear to eliminate cases in dogs when vaccinating 50 percent of people only reduces the number of human cases by about 50 percent?",
-    "Lorem ipsum."
+    "Take note of your answers; we will discuss them among the full group."
   ),
   question_freeresponse(
-    "What do you think vaccinating 50 percent of dogs would do to the number of human cases, on average?",
-    "Lorem ipsum."
-  ),
-  question_freeresponse(
-    "What about the effect of vaccinating 50 percent of people on the number of dog cases?",
-    "Lorem ipsum."
+    "Based on what you think of the model world: What impact do you expect vaccinating 50% of dogs to have on the human cases? What about 50% of humans, on dog cases?  Why?",
+    "Take note of your answers; we will discuss them among the full group."
   )
 )
 ```
@@ -238,7 +216,7 @@ This exercise uses a chain binomial simulation model to explore the dynamics and
   2. give you practice in making arguments based on indirect evidence, and
   3. introduce the concept of a *model world*.
 
-Aside from the interactive section, all of the model outputs here are pre-computed. You can find that data as part of the `ICI3D` package as the data object `dynfever_DAIDD_outbreak` and `dynfever_DAIDD_distros`. The model code for the interactive portion of this tutorial is also part of the `ICI3D` package: the pertinent functions begin with the prefix `dynfever_`. That same code also generates the pre-computed data, and can be found in [the package repository](https://github.com/ICI3D/ici3d-pkg).
+Aside from the interactive section, all of the model outputs here are pre-computed. You can find that data as part of the `ICI3D` package as the data object `dynfever_DAIDD_outbreak` and `dynfever_DAIDD_distros`. The model code for the interactive portion of this tutorial is also part of the `ICI3D` package: the pertinent functions begin with the prefix `dynfever_`. Those functions are used to pre-computed data, and can be found in [the package repository](https://github.com/ICI3D/ici3d-pkg/tree/master/data-raw/).
 
 This exercise was originally developed by Juliet R. C. Pulliam and subsequently extended and refined by efforts from MMED faculty and participants.
 

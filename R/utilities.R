@@ -80,3 +80,4 @@ seq_between <- function(r, ...) seq(from = r[1], to = r[2], ...)
 theyear <- function(date = Sys.Date()) {
   date |> as.Date() |> trunc("years") |> format("%Y") |> as.integer()
 }
+

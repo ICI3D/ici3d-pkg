@@ -7,6 +7,7 @@
 #' @inheritParams dynfever_toLong
 #'
 #' @export
+#' @family dynfever
 dynfever_incidence <- function(dynfever_output) {
   # if necessary, get the relevant part of the outputS
   if (!is.data.table(dynfever_output)) {
@@ -38,6 +39,7 @@ dynfever_incidence <- function(dynfever_output) {
 #' @import ggplot2
 #' @importFrom ggrepel geom_label_repel
 #' @export
+#' @family dynfever
 dynfever_plot_simple <- function(
   dynfever_output = dynfever_sample(), sample_id
 ) {
@@ -79,6 +81,7 @@ dynfever_plot_simple <- function(
 
 #' @rdname dynfever_plot_simple
 #' @export
+#' @family dynfever
 dynfever_plot_empty <- function() {
   # create plot
   ggplot(dynfever_incidence(dynfever_DAIDD_outbreak)) +
@@ -110,6 +113,7 @@ dynfever_plot_empty <- function() {
 #' @param startyear the "year 0" corresponding to `sample == 1` outcomes
 #'
 #' @export
+#' @family dynfever
 dynfever_plot_series <- function(
   dynfever_output = dynfever_sample(n = 5),
   startyear = {
@@ -156,3 +160,83 @@ dynfever_plot_series <- function(
 
 }
 
+#' @title Dynamical Fever: Compare Vaccine Pops
+#'
+#' @param dt a [data.table::data.table()]; with columns:
+#'  - `sample`, the sample id
+#'  - `vax_pop`, the vaccinated population, either "h" or "d"
+#'  - `pop`, the measured population, either "h" or "d"
+#'  - `vax_cov`, the coverage in the vaccinated population
+#'  - `count`, the final size of the outbreak in `pop`
+#'
+#' @param countbinwidth positive integer, how wide to make the bins for
+#' counts?
+#'
+#' @return a [ggplot2::ggplot()] object
+#' @export
+#' @family dynfever
+dynfever_plot_heatmap <- function(
+  dt, countbinwidth = 10
+) {
+
+  # bin outcomes, then get their relative frequencies
+  heat_dt <- dt[,
+    .N, keyby = .(
+      vax_cov, vax_pop, pop,
+      count = floor(count/countbinwidth)*countbinwidth + countbinwidth/2
+    )
+  ][, .(
+      count, frac = N/sum(N)
+    ), keyby = .(vax_cov, vax_pop, pop)
+  ]
+
+  # get the median outcomes
+  med_dt <- dt[, .(
+    count = median(count)
+  ), by = .(vax_cov, vax_pop, pop)]
+
+  # get center point references
+  center_dt <- dt[,
+    .(count = mean(range(count))), by = pop
+  ][, dt[,
+      .(vax_cov = mean(range(vax_cov))), by = vax_pop
+  ], by = .(pop, count)][, needed := TRUE ]
+
+  # prepare to display "???" for missing ones
+  center_dt[
+    heat_dt[, .N, by=.(pop, vax_pop)], on = .(pop, vax_pop),
+    needed := !(N > 0)
+  ]
+
+  return(ggplot(heat_dt) +
+    aes(vax_cov, count, fill = log(frac)) + facet_grid(
+      pop ~ vax_pop, labeller = labeller(
+        pop = c(h = "People", d = "Dogs"),
+        vax_pop = c(h = "People", d = "Dogs")
+      ),
+      switch = "y"
+    ) +
+    geom_tile(alpha = 0.7) +
+    geom_point(
+      aes(fill = NULL, color = "median"),
+      data = med_dt
+    ) + coord_cartesian(clip = "off") +
+    geom_text(
+      aes(fill = NULL),
+      data = center_dt[needed == TRUE],
+      label = "???", size = 10
+    ) +
+    scale_x_continuous("Coverage in ...", expand = c(0, 0), position = "top") +
+    scale_y_continuous("Incidence in ...", expand = c(0, 0)) +
+    scale_fill_continuous(
+      "Fraction\nof Simulations",
+      labels = scales::math_format(10^.x)
+    ) +
+    scale_color_manual(
+      NULL, labels = c(median = "Median"), values = c(median = "red")
+    ) +
+    theme_minimal() + theme(
+      panel.spacing = unit(1.5, "line"), strip.placement = "outside",
+      legend.position = "bottom"
+    ))
+}

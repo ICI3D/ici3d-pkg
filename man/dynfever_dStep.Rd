@@ -42,3 +42,17 @@ dynfever_dStep(y = y, parms = ps)
 dynfever_dStep(y = y, parms = ps)
 
 }
+\seealso{
+Other dynfever: 
+\code{\link{dynfever_incidence}()},
+\code{\link{dynfever_params}()},
+\code{\link{dynfever_plot_heatmap}()},
+\code{\link{dynfever_plot_series}()},
+\code{\link{dynfever_plot_simple}()},
+\code{\link{dynfever_pop}()},
+\code{\link{dynfever_sample}()},
+\code{\link{dynfever_simulate}()},
+\code{\link{dynfever_summarize}()},
+\code{\link{dynfever_toLong}()}
+}
+\concept{dynfever}

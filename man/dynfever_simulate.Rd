@@ -40,4 +40,19 @@ sim2 <- ICI3D:::dynfever_simulate(pop, 1:10, ps)
 !all(sim1$states == sim2$states)
 # however, it can be provided a seed to ensure comparable results:
 all(sim1$states == ICI3D:::dynfever_simulate(pop, 1:10, ps, 1L)$states)
+
 }
+\seealso{
+Other dynfever: 
+\code{\link{dynfever_dStep}()},
+\code{\link{dynfever_incidence}()},
+\code{\link{dynfever_params}()},
+\code{\link{dynfever_plot_heatmap}()},
+\code{\link{dynfever_plot_series}()},
+\code{\link{dynfever_plot_simple}()},
+\code{\link{dynfever_pop}()},
+\code{\link{dynfever_sample}()},
+\code{\link{dynfever_summarize}()},
+\code{\link{dynfever_toLong}()}
+}
+\concept{dynfever}

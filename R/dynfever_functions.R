@@ -65,6 +65,7 @@ dynfever_pop <- function(dogs = 1000L, humans = 1000L) {
 #' try(dynfever_params(vax_dogs = 1.5))
 #'
 #' @export
+#' @family dynfever
 dynfever_params <- function(
   R0 = 2, pp = 0.002, vax_humans = 0, vax_dogs = 0, N_d = dynfever_pop()["N_d"]
 ) {
@@ -114,6 +115,7 @@ dynfever_params <- function(
 #' dynfever_dStep(y = y, parms = ps)
 #'
 #' @export
+#' @family dynfever
 dynfever_dStep <- function(
   t, y, parms, ...
 ) with(parms, {
@@ -167,6 +169,9 @@ dynfever_dStep <- function(
 #' !all(sim1$states == sim2$states)
 #' # however, it can be provided a seed to ensure comparable results:
 #' all(sim1$states == ICI3D:::dynfever_simulate(pop, 1:10, ps, 1L)$states)
+#'
+#' @export
+#' @family dynfever
 dynfever_simulate <- function(y, ts, ps, seed) {
   if (!missing(seed)) set.seed(seed)
 
@@ -243,8 +248,10 @@ dynfever_simulate <- function(y, ts, ps, seed) {
 #' )
 #'
 #' five_run <- dynfever_sample(n=5, parms = pars)
+#'
 #' @export
 #' @importFrom parallel mcmapply
+#' @family dynfever
 dynfever_sample <- function(
   n = 1L, y = dynfever_pop(),
   times = 1L:MAXTIME,
@@ -315,6 +322,7 @@ dynfever_sample <- function(
 #' key(run_long$states)
 #'
 #' @export
+#' @family dynfever
 dynfever_toLong <- function(dynfever_output) {
 
   # if we have the pair of outputs ...
@@ -357,6 +365,7 @@ dynfever_toLong <- function(dynfever_output) {
 #' @inheritParams dynfever_toLong
 #'
 #' @export
+#' @family dynfever
 dynfever_summarize <- function(dynfever_output) {
   long.dts <- dynfever_toLong(dynfever_output)
   long.dts$summary <- long.dts$states[state %in% c("I", "C"), .SD[which.max(count)], by=setdiff(key(long.dts$states), "time")]
