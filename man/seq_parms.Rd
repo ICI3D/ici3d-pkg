@@ -11,15 +11,21 @@ seq_parms(ref.parms, n)
 
 \item{ref.seed}{a named list OR an unnamed list of length equal to `n`:
 respectively
- - the paramaeter values to be replicated into a sequence
+ - the parameter values to be replicated into a sequence
  - the sequence of parameter values}
 }
 \value{
 depending on the input format:
- - a list of clones parameters
+ - a list of clones of parameters
  - the same sequence of parameters provided
 }
 \description{
 Returns a series of parameters from a flexible set of
 inputs.
 }
+\seealso{
+Other utilities: 
+\code{\link{seq_between}()},
+\code{\link{theyear}()}
+}
+\concept{utilities}
