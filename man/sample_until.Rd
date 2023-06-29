@@ -34,8 +34,11 @@ cumsum(draws)
 }
 \seealso{
 Other heterogeneity: 
-\code{\link{het_plot_hist}()},
+\code{\link{het_contact_hist}()},
+\code{\link{het_finalsize_hist}()},
 \code{\link{het_population}()},
+\code{\link{het_sample}()},
+\code{\link{het_simulate}()},
 \code{\link{sample_pair}()}
 }
 \concept{heterogeneity}

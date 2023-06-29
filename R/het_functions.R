@@ -33,7 +33,7 @@ het_population <- function(
   if (!missing(seed)) set.seed(seed)
   scale <- beta_var / beta_mean
   shape <- beta_mean / scale
-  rgamma(n, shape = shape, scale = scale) |> order(decreasing = TRUE)
+  rgamma(n, shape = shape, scale = scale) |> sort(decreasing = TRUE)
 }
 
 #' @title Heterogeneous Contact Rate Histogram
@@ -54,7 +54,7 @@ het_population <- function(
 #' het_plot_hist(hp, beta_mean = 1)
 #'
 #' @export
-het_plot_hist <- function(
+het_contact_hist <- function(
   contact_rates, beta_mean, binwidth = .1, ...
 ) {
   return(ggplot(data.table(contact_rates = contact_rates)) +
@@ -69,6 +69,39 @@ het_plot_hist <- function(
       axis.text = element_text(size = rel(2))
   ))
 }
+
+#' @title Heterogeneous Final Size Histogram
+#'
+#' @description Plots a histogram of final sizes from many [het_sample()]s
+#'
+#' @param dt a data.table; the return from [het_sample()]
+#'
+#' @return a ggplot object
+#' @family heterogeneity
+#' @examples
+#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
+#' samples <- het_sample(hp)
+#' het_finalsize_hist(samples)
+#'
+#' @export
+het_finalsize_hist <- function(ts) {
+  ts[1, ]
+  return(ggplot(
+    ts[, .(`final size` = max(cumulativeI)), by = sample_id ]
+  ) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
+    theme_minimal() + theme(
+      axis.title = element_text(size=rel(2)),
+      axis.text = element_text(size=rel(2))
+    ) + ylab("# of outbreaks"))
+}
+
+het.runs.hist <- function(ts) ggplot(
+  ts[,list(`final size` = max(cumulativeI)), by=runid]
+) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
+  theme_minimal() + theme(
+    axis.title = element_text(size=rel(2)),
+    axis.text = element_text(size=rel(2))
+  ) + ylab("# of outbreaks")
 
 #' @title Sample Pairs of Distinct Indices
 #'
@@ -165,12 +198,30 @@ sample_until <- function(
 }
 
 
-het.run <- function(rid, mxdst, end.time, gmma, rho) {
-  set.seed(rid)
+#' @title Simulate Heterogeneous Transmission Model
+#'
+#' @description
+#' Run the heterogeneous transmission model for a particular parameter
+#' combination.
+#'
+#' @param mxdst individual contact rates, as returned by [het_population()]
+#'
+#' @param params a list, with `tmax`, `recovery_rate`, and `waning_rate` keys
+#'
+#' @family heterogeneity
+#' @export
+het_simulate <- function(
+  mxdst, params, seed
+) {
+  if (!missing(seed)) { set.seed(seed) }
   pop.size <- length(mxdst)
+  end.time <- params$tmax
+  gmma <- params$recovery_rate
+  rho <- params$waning_rate
+
   tloss <- trec <- rep(NaN, pop.size)
 
-  inf.rate <- mean(mxdst) * pop.size
+  inf.rate <- sum(mxdst)
 
   event.times <- c(0, rexp(ceiling(end.time/inf.rate*1.1), inf.rate))
   while(sum(event.times) < end.time) event.times <- c(event.times, rexp(ceiling(end.time/inf.rate*0.1), inf.rate))
@@ -234,7 +285,11 @@ het.run <- function(rid, mxdst, end.time, gmma, rho) {
     last.time <- event.times[i]
   }
 
-  return(data.table(runid = rid, day = event.times[1:i], S=S[1:i], I=I[1:i], R=R[1:i], cumulativeI = cumulativeI[1:i]))
+  return(data.table(
+    day = c(event.times[1:i], end.time),
+    S = S[c(1:i, i)], I = I[c(1:i, i)], R = R[c(1:i, i)],
+    cumulativeI = cumulativeI[c(1:i, i)]
+  ))
 }
 
 base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric(), runstate=factor())) ggplot() +
@@ -250,28 +305,40 @@ base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day =
   geom_line(data=dt)
 
 
-het.epidemic.runs <- function(
+#' @title Sample [het_simulate()]
+#'
+#' @description
+#' Run [het_simulate()] many times with the same parameter combinations.
+#'
+#' @param n a positive integer, the number of samples to simulate
+#'
+#' @inheritParams het_simulate
+#' @importFrom parallel mclapply
+#' @importFrom data.table rbindlist melt.data.table
+#' @family heterogeneity
+#' @examples
+#' hetruns <- het_sample(10)
+#' hetruns[day == 5.0]
+#'
+#' @export
+het_sample <- function(
+  n,
   mxdst = het_population(n = 300, beta_mean = 1, beta_var = .5),
-  runs,
-  gmma = 1, rho = 0, # lose immunity
-  end.time = 5, tell.run = NULL
+  params = list(tmax = 5, recovery_rate = 1, waning_rate = 0)
 ) {
-  ts <- het.run(runs[1], mxdst, end.time, gmma, rho)[, runstate := "current"]
-  if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runs[1]))
-  for (runid in runs[-1]) {
-      ts <- rbind(ts[, runstate := "past"], het.run(runid, mxdst, end.time, gmma, rho)[, runstate := "current"])
-      if (!is.null(tell.run)) tell.run$inc(1/length(runs), detail = paste("Finished run", runid))
-  }
-  return(melt.data.table(ts, id.vars = c("runid","day","runstate"), variable.name = "state"))
-}
 
-het.runs.hist <- function(ts) ggplot(
-  ts[,list(`final size` = max(cumulativeI)), by=runid]
-) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
-  theme_minimal() + theme(
-    axis.title = element_text(size=rel(2)),
-    axis.text = element_text(size=rel(2))
-  ) + ylab("# of outbreaks")
+  ts <- seq_len(n) |> parallel::mclapply(
+    FUN = \(sid, mxdst, params) het_simulate(mxdst, params, sid),
+    mxdst = mxdst, params = params,
+    mc.preschedule = FALSE
+  ) |> rbindlist(idcol = "sample_id")
+
+  return(melt.data.table(
+    ts, id.vars = c("sample_id", "day"),
+    variable.name = "state"
+  ) |> setkey(sample_id, day, state))
+
+}
 
 het.ui <- shinyUI({
   button34 <- actionButton("part34click", "Run")

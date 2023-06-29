@@ -28,8 +28,11 @@ draws <- sample_pair(n = 100, prob = 10)
 }
 \seealso{
 Other heterogeneity: 
-\code{\link{het_plot_hist}()},
+\code{\link{het_contact_hist}()},
+\code{\link{het_finalsize_hist}()},
 \code{\link{het_population}()},
+\code{\link{het_sample}()},
+\code{\link{het_simulate}()},
 \code{\link{sample_until}()}
 }
 \concept{heterogeneity}

@@ -34,7 +34,10 @@ hist(hp)
 }
 \seealso{
 Other heterogeneity: 
-\code{\link{het_plot_hist}()},
+\code{\link{het_contact_hist}()},
+\code{\link{het_finalsize_hist}()},
+\code{\link{het_sample}()},
+\code{\link{het_simulate}()},
 \code{\link{sample_pair}()},
 \code{\link{sample_until}()}
 }
