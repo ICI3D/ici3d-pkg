@@ -84,15 +84,18 @@ het_contact_hist <- function(
 #' het_finalsize_hist(samples)
 #'
 #' @export
-het_finalsize_hist <- function(ts) {
-  ts[1, ]
-  return(ggplot(
-    ts[, .(`final size` = max(cumulativeI)), by = sample_id ]
-  ) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
+het_finalsize_hist <- function(ts, binwidth = 5, ...) {
+  maxpop <- ts[1, S+I+R]
+  return(
+    ggplot(
+      ts[, .(value = cumulativeI[.N]), by = sample_id ]
+    ) + aes(x = value) + geom_histogram(binwidth = binwidth) +
     theme_minimal() + theme(
       axis.title = element_text(size=rel(2)),
       axis.text = element_text(size=rel(2))
-    ) + ylab("# of outbreaks"))
+    ) + coord_cartesian(xlim = c(0, maxpop)) +
+    labs(x= "... of size", y = "# of outbreaks")
+  )
 }
 
 het.runs.hist <- function(ts) ggplot(
@@ -333,10 +336,7 @@ het_sample <- function(
     mc.preschedule = FALSE
   ) |> rbindlist(idcol = "sample_id")
 
-  return(melt.data.table(
-    ts, id.vars = c("sample_id", "day"),
-    variable.name = "state"
-  ) |> setkey(sample_id, day, state))
+  return(ts |> setkey(sample_id, day))
 
 }
 

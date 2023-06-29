@@ -4,7 +4,7 @@
 \alias{het_finalsize_hist}
 \title{Heterogeneous Final Size Histogram}
 \usage{
-het_finalsize_hist(ts)
+het_finalsize_hist(ts, binwidth = 5, ...)
 }
 \arguments{
 \item{dt}{a data.table; the return from [het_sample()]}
