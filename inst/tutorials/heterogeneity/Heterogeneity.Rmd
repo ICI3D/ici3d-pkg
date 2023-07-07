@@ -25,13 +25,13 @@ knitr::opts_chunk$set(
 
 This exercise will help you build intuition for how heterogeneity in contact mixing patterns affects infectious disease dynamics.  We have built a continuous time stochastic *SIR* model for you to explore.  Importantly, in this model not all individuals are the same.  Each individual has their own contact rate, at which they meet other people in the population.  Some individuals meet other people more often, and some meet people less often.
 
-If we think of the total distribution of contact mixing patterns, then we can characterize it using terms such as its mean and variance. In this tutorial, you will be able to specify mean and variance when creating a population, and thus its heterogeneity. For the high level trends we're exploring here, the presence of heterogeneity is more important than the particular distribution. In this tutorial, we use a gamma distribution, but if you're interested in exploring other distributions, look at the *Notes* section.
+If we think of the total distribution of contact mixing patterns, then we can characterize it using terms such as its mean and standard deviation. In this tutorial, you will be able to specify those characteristics when creating a population, and thus its heterogeneity. For the high level trends we're exploring here, the presence of heterogeneity is more important than the particular distribution. This tutorial specifically uses a gamma distribution, but if you're interested in exploring other distributions, look at the *Notes* section.
 
 ## Part 1: Low Variance
 
 ```{r}
 fluidRow(
-  column(6, markdown("First, let's run the model with very low variance so we can see what happens in a situation that is very similar to the homogeneous population model.  Under these conditions, the underlying model is approximately mimicing the Gillespie algorithm. In turn, for large populations, that approach closely follows the deterministic results from compartmental, ordinary differential equations (ODEs) for the *SIR* model world.
+  column(6, markdown("First, let's run the model with very low standard deviation so we can see what happens in a situation that is very similar to the homogeneous population model.  Under these conditions, the underlying model is approximately mimicing the Gillespie algorithm. In turn, for large populations, that approach closely follows the deterministic results from compartmental, ordinary differential equations (ODEs) for the *SIR* model world.
 
 The panel to the right is a histogram of the contact rate distribution. Below, the left plot shows the epidemic time series. The right shows the distribution of outbreak final size (*i.e.* total number of people infected before outbreak is over) from the runs.
 ")),
@@ -49,7 +49,7 @@ fluidRow(
 
 ```{r, context="server"}
 mn_beta <- 2
-low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_var = 0.001)
+low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_sd = 0.001)
 low_pars <- list(tmax = 10, recovery_rate = 1, waning_rate = 0)
 low_hsim <- het_simulate(low_hpop, params = low_pars)
 
@@ -89,14 +89,14 @@ This is the code running behind the scenes:
 
 ```{r, echo = TRUE}
 mn_beta <- 2
-low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_var = 0.001)
+low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_sd = 0.001)
 low_pars <- list(tmax = 10, recovery_rate = 1, waning_rate = 0)
 ## ... for each time "GO!" clicked ...
 low_hsim <- het_simulate(low_hpop, params = low_pars)
 ```
 
  - `beta_mean` the mean of your contact rate distribution; in a homogeneous population SIR model, this would be the contact rate for everyone `beta`.
- - `beta_var` the variance in contact rate
+ - `beta_sd` the standard deviation in contact rate
  - `tmax` how many days to run the simulation
  - `n` the population size
  - `recovery_rate` the recovery rate (or 1/mean duration of infectiousness)
@@ -104,15 +104,15 @@ low_hsim <- het_simulate(low_hpop, params = low_pars)
 
 ## Part 2: Changing Variance and Population
 
-Now we'll try comparing a sample of our heterogeneous model using the same mean contact rate, but for different contact rate variance and different population size. Using these input fields, you can vary these features. Look at the questions below, then run some simulations to gather relevant results to answer them. Note: the run time depends on population size, so don't try anything larger than `n = 500` or so. 
+Now we'll try comparing a sample of our heterogeneous model using the same mean contact rate, but for different contact rate standard deviation and different population size. Using these input fields, you can vary these features. Look at the questions below, then run some simulations to gather relevant results to answer them. Note: the run time depends on population size, so don't try anything larger than `n = 500` or so. 
 
 ```{r freeresponse_var}
 quiz(question_freeresponse(
-  "For the same population, how does changing variance influence the distribution of outbreak time series and final sizes?",
+  "For the same population, how does changing standard deviation influence the distribution of outbreak time series and final sizes?",
   "Take note of your answers; we will discuss them among the full group."
 ),
 question_freeresponse(
-  "For the same variance, how does changing the population influence the distribution of outbreak time series and final sizes?",
+  "For the same standard deviation, how does changing the population influence the distribution of outbreak time series and final sizes?",
   "Take note of your answers; we will discuss them among the full group."
 ),
 question_freeresponse(
@@ -121,11 +121,9 @@ question_freeresponse(
 ), caption = NULL)
 ```
 
-Use these input fields to pick a variance and population size, then click the run button.
-
 ```{r}
 inputPanel(
-  numericInput("sens_var", label = "Variance?", value = 0.001, min = 0.0001, max = 1),
+  numericInput("sens_sd", label = "Standard deviation?", value = 0.001, min = 0.0001, max = 1),
   numericInput("sens_pop", label = "Population?", value = 100, min = 10, max = 500, step = 1),
   actionButton("sens_click", "GO!")
 )
@@ -143,7 +141,7 @@ sens_contact_plot <- reactiveVal(
 
 observeEvent(input$sens_click, {
   het_population(
-    n = input$sens_pop, beta_mean = mn_beta, beta_var = input$sens_var
+    n = input$sens_pop, beta_mean = mn_beta, beta_sd = input$sens_sd
   ) |> sens_hpop()
   het_sample(
     n = 50, mxdst = sens_hpop(), params = low_pars
@@ -162,7 +160,7 @@ Recall that in a homogeneous model, $R_0 = \beta/\gamma$. In the early sections,
 
 ```{r freeresponse_R0}
 quiz(question_freeresponse(
-  "What happens to outbreak dynamics when the *average* $R$ near 1, as heterogeneity increases (i.e. `beta_var` increases)?",
+  "What happens to outbreak dynamics when the *average* $R$ near 1, as heterogeneity increases (i.e. `beta_sd` increases)?",
   "Take note of your answers; we will discuss them among the full group."
 ), caption = NULL)
 ```
@@ -170,7 +168,7 @@ quiz(question_freeresponse(
 ```{r}
 inputPanel(
   numericInput("R0_bmn", label = "beta mean?", value = 2, min = .1, max = 10),
-  numericInput("R0_var", label = "beta variance?", value = .001, min = 1e-6, max = 10),
+  numericInput("R0_sd", label = "beta standard deviation?", value = .001, min = 1e-6, max = 10),
   numericInput("R0_pop", label = "population size?", value = 100, min = 10, max = 500, step = 1),
   numericInput("R0_recovery", label = "recovery rate?", value = 1, min = 1e-6, max = 10),
   numericInput("R0_waning", label = "waning rate?", value = 0, min = 0, max = 10),
@@ -189,7 +187,7 @@ R0_contact_plot <- reactiveVal(isolate(sens_contact_plot()))
 
 observeEvent(input$R0_click, {
   het_population(
-    n = input$R0_pop, beta_mean = input$R0_bmn, beta_var = input$R0_var
+    n = input$R0_pop, beta_mean = input$R0_bmn, beta_sd = input$R0_sd
   ) |> R0_hpop()
   R0_pars <- list(tmax = 10, recovery_rate = input$R0_recovery, waning_rate = input$R0_waning)
   het_sample(

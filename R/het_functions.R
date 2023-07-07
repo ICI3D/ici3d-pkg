@@ -9,7 +9,7 @@ NULL
 #'
 #' @param beta_mean a numeric, greater than 0: mean contact rate
 #'
-#' @param beta_var a numeric, greater than 0: variance of the contact rate
+#' @param beta_sd a numeric, greater than 0: standard deviation of the contact rate
 #'
 #' @param seed an integer, optional: the random seed to use (if supplied); see
 #' [set.seed()]
@@ -18,31 +18,31 @@ NULL
 #' order
 #'
 #' @details This function generates a heterogeneous population of contact rates
-#' using [rgamma()].  The mean and variance of the distribution are
+#' using [rgamma()].  The mean and standard deviation of the distribution are
 #' transformed into the `shape` and `scale` parameters for [rgamma()].
 #'
 #' @family heterogeneity
 #'
 #' @examples
 #' mean_contacts <- 2
-#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_sd = .1)
 #' het_contact_hist(hp, beta_mean = mean_contacts)
 #'
 #' @export
 het_population <- function(
-  n, beta_mean, beta_var, seed
+  n, beta_mean, beta_sd, seed
 ) {
   # ensure arguments are appropriate
   n |> check_integer() |> check_positive()
   beta_mean |> check_numeric() |> check_positive()
-  beta_var |> check_numeric() |> check_positive()
+  beta_sd |> check_numeric() |> check_positive()
 
   # set the seed if desired
   if (!missing(seed)) set.seed(seed)
 
   # transform the arguments, draw gamma deviates, sort from high => low
   return(
-    rgamma(n, shape = beta_mean^2 / beta_var, scale = beta_var / beta_mean) |>
+    rgamma(n, shape = beta_mean^2 / beta_sd^2, scale = beta_sd^2 / beta_mean) |>
     sort(decreasing = TRUE)
   )
 }
@@ -62,7 +62,7 @@ het_population <- function(
 #' @family heterogeneity
 #' @examples
 #' mean_contacts <- 2
-#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_sd = .1)
 #' het_contact_hist(hp, beta_mean = mean_contacts)
 #'
 #' @export
@@ -110,7 +110,7 @@ het_contact_hist <- function(
 #' @return a [ggplot2::ggplot()] object
 #' @family heterogeneity
 #' @examples
-#' hp <- het_population(n = 500, beta_mean = 2, beta_var = 1)
+#' hp <- het_population(n = 500, beta_mean = 2, beta_sd = 1)
 #' samples <- het_sample(100, hp)
 #' het_finalsize_hist(samples, 10)
 #'
@@ -382,7 +382,7 @@ het_plot <- function(ts) {
 #' @export
 het_sample <- function(
   n,
-  mxdst = het_population(n = 300, beta_mean = 1, beta_var = .5),
+  mxdst = het_population(n = 300, beta_mean = 1, beta_sd = .5),
   params = list(tmax = 5, recovery_rate = 1, waning_rate = 0)
 ) {
 
