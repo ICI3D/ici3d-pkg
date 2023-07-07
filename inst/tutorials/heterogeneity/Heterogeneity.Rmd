@@ -1,0 +1,220 @@
+---
+title: "Heterogeneity Tutorial"
+output:
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+description: >
+  The *Heterogeneity* tutorial used in [DAIDD](https://www.ici3d.org/DAIDD)
+  and [MMED](https://www.ici3d.org/MMED)
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(ICI3D)
+library(data.table)
+library(ggplot2)
+library(patchwork)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  out.width = '100%'
+)
+```
+
+## Overview
+
+This exercise will help you build intuition for how heterogeneity in contact mixing patterns affects infectious disease dynamics.  We have built a continuous time stochastic *SIR* model for you to explore.  Importantly, in this model not all individuals are the same.  Each individual has their own contact rate, at which they meet other people in the population.  Some individuals meet other people more often, and some meet people less often.
+
+If we think of the total distribution of contact mixing patterns, then we can characterize it using terms such as its mean and variance. In this tutorial, you will be able to specify mean and variance when creating a population, and thus its heterogeneity. For the high level trends we're exploring here, the presence of heterogeneity is more important than the particular distribution. In this tutorial, we use a gamma distribution, but if you're interested in exploring other distributions, look at the *Notes* section.
+
+## Part 1: Low Variance
+
+```{r}
+fluidRow(
+  column(6, markdown("First, let's run the model with very low variance so we can see what happens in a situation that is very similar to the homogeneous population model.  Under these conditions, the underlying model is approximately mimicing the Gillespie algorithm. In turn, for large populations, that approach closely follows the deterministic results from compartmental, ordinary differential equations (ODEs) for the *SIR* model world.
+
+The panel to the right is a histogram of the contact rate distribution. Below, the left plot shows the epidemic time series. The right shows the distribution of outbreak final size (*i.e.* total number of people infected before outbreak is over) from the runs.
+")),
+column(6, plotOutput("low_contact_hist"))
+)
+inputPanel(
+  numericInput("low_samples", label = "Add runs:", value = 1, min = 1, max = 50, step = 1),
+  actionButton("low_click", "GO!"),
+  span("Total runs: ", textOutput("low_runs", inline = T)),
+)
+fluidRow(
+  plotOutput("low_plots")
+)
+```
+
+```{r, context="server"}
+mn_beta <- 2
+low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_var = 0.001)
+low_pars <- list(tmax = 10, recovery_rate = 1, waning_rate = 0)
+low_hsim <- het_simulate(low_hpop, params = low_pars)
+
+output$low_contact_hist <- renderPlot(het_contact_hist(low_hpop, beta_mean = mn_beta))
+
+low_series <- reactiveVal(low_hsim[, sample_id := 1])
+low_count <- reactiveVal(1)
+
+observeEvent(
+  input$low_click, {
+    n <- input$low_samples
+    (low_count() + n) |> low_count()
+    updateNumericInput(inputId = "low_samples", value = 1)
+    newsamp <- het_sample(n, low_hpop, low_pars)
+    redid <- low_series()[, max(sample_id)]
+    newsamp[, sample_id := sample_id + redid ]
+    rbind(low_series(), newsamp) |> low_series()
+  }
+)
+
+output$low_runs <- renderText(low_count())
+output$low_plots <- renderPlot(
+  het_plot(low_series()) + het_finalsize_hist(low_series()) + plot_layout(ncol = 2)
+)
+```
+
+```{r freeresponse_low}
+quiz(question_freeresponse(
+  "Try simulating outbreaks for low-heterogeneity population until you have at least 50 samples. How would you describe the distribution of outbreak time series and final sizes?",
+  "Take note of your answers; we will discuss them among the full group."
+), caption = NULL)
+```
+
+### Some Details
+
+This is the code running behind the scenes:
+
+```{r, echo = TRUE}
+mn_beta <- 2
+low_hpop <- het_population(n = 100, beta_mean = mn_beta, beta_var = 0.001)
+low_pars <- list(tmax = 10, recovery_rate = 1, waning_rate = 0)
+## ... for each time "GO!" clicked ...
+low_hsim <- het_simulate(low_hpop, params = low_pars)
+```
+
+ - `beta_mean` the mean of your contact rate distribution; in a homogeneous population SIR model, this would be the contact rate for everyone `beta`.
+ - `beta_var` the variance in contact rate
+ - `tmax` how many days to run the simulation
+ - `n` the population size
+ - `recovery_rate` the recovery rate (or 1/mean duration of infectiousness)
+ - `waning_rate` is the waning rate (or 1/mean duration of immunity). `waning_rate = 0` is equivalent to an infinite duration of immunity, or no transitions from `R` to `S`.
+
+## Part 2: Changing Variance and Population
+
+Now we'll try comparing a sample of our heterogeneous model using the same mean contact rate, but for different contact rate variance and different population size. Using these input fields, you can vary these features. Look at the questions below, then run some simulations to gather relevant results to answer them. Note: the run time depends on population size, so don't try anything larger than `n = 500` or so. 
+
+```{r freeresponse_var}
+quiz(question_freeresponse(
+  "For the same population, how does changing variance influence the distribution of outbreak time series and final sizes?",
+  "Take note of your answers; we will discuss them among the full group."
+),
+question_freeresponse(
+  "For the same variance, how does changing the population influence the distribution of outbreak time series and final sizes?",
+  "Take note of your answers; we will discuss them among the full group."
+),
+question_freeresponse(
+  "Changing both features at the same time, how do they seem to interact?",
+  "Take note of your answers; we will discuss them among the full group."
+), caption = NULL)
+```
+
+Use these input fields to pick a variance and population size, then click the run button.
+
+```{r}
+inputPanel(
+  numericInput("sens_var", label = "Variance?", value = 0.001, min = 0.0001, max = 1),
+  numericInput("sens_pop", label = "Population?", value = 100, min = 10, max = 500, step = 1),
+  actionButton("sens_click", "GO!")
+)
+fluidRow(
+  plotOutput("sens_plots")
+)
+```
+
+```{r, context = "server"}
+sens_hpop <- reactiveVal(low_hpop)
+sens_series <- reactiveVal(het_sample(n = 50, mxdst = low_hpop, params = low_pars))
+sens_contact_plot <- reactiveVal(
+  het_contact_hist(low_hpop, beta_mean = mn_beta)
+)
+
+observeEvent(input$sens_click, {
+  het_population(
+    n = input$sens_pop, beta_mean = mn_beta, beta_var = input$sens_var
+  ) |> sens_hpop()
+  het_sample(
+    n = 50, mxdst = sens_hpop(), params = low_pars
+  ) |> sens_series()
+  het_contact_hist(sens_hpop(), beta_mean = mn_beta) |> sens_contact_plot()
+})
+
+output$sens_plots <- renderPlot(
+  sens_contact_plot() + het_plot(sens_series()) + het_finalsize_hist(sens_series()) + plot_layout(ncol = 3)
+)
+```
+
+## Part 3: Heterogeneity & $R_0$
+
+Recall that in a homogeneous model, $R_0 = \beta/\gamma$. In the early sections, we used a recovery rate $\gamma = 1$, meaning $R_0 = \beta$ for a _homogeneous_ population.  We also enforced life long immunity with an immunity waning rate of 0, or $\rho = 0$. In this section, you have complete control of scenario parameters for a _heterogeneous_ population.
+
+```{r freeresponse_R0}
+quiz(question_freeresponse(
+  "What happens to outbreak dynamics when the *average* $R$ near 1, as heterogeneity increases (i.e. `beta_var` increases)?",
+  "Take note of your answers; we will discuss them among the full group."
+), caption = NULL)
+```
+
+```{r}
+inputPanel(
+  numericInput("R0_bmn", label = "beta mean?", value = 2, min = .1, max = 10),
+  numericInput("R0_var", label = "beta variance?", value = .001, min = 1e-6, max = 10),
+  numericInput("R0_pop", label = "population size?", value = 100, min = 10, max = 500, step = 1),
+  numericInput("R0_recovery", label = "recovery rate?", value = 1, min = 1e-6, max = 10),
+  numericInput("R0_waning", label = "waning rate?", value = 0, min = 0, max = 10),
+  actionButton("R0_click", "GO!")
+)
+fluidRow(
+  plotOutput("R0_plots")
+)
+```
+
+
+```{r, context = "server"}
+R0_hpop <- reactiveVal(low_hpop)
+R0_series <- reactiveVal(isolate(sens_series()))
+R0_contact_plot <- reactiveVal(isolate(sens_contact_plot()))
+
+observeEvent(input$R0_click, {
+  het_population(
+    n = input$R0_pop, beta_mean = input$R0_bmn, beta_var = input$R0_var
+  ) |> R0_hpop()
+  R0_pars <- list(tmax = 10, recovery_rate = input$R0_recovery, waning_rate = input$R0_waning)
+  het_sample(
+    n = 50, mxdst = R0_hpop(), params = R0_pars
+  ) |> R0_series()
+  het_contact_hist(R0_hpop(), beta_mean = input$R0_bmn) |> R0_contact_plot()
+})
+
+output$R0_plots <- renderPlot(
+  R0_contact_plot() + het_plot(R0_series()) + het_finalsize_hist(R0_series()) + plot_layout(ncol = 3)
+)
+```
+
+## Notes
+
+This exercise was originally developed by *Steve E. Bellan* for DAIDD 2012. It
+has been subsequently extended and refined by efforts from ICI3D faculty and
+participants.
+
+All of the functions used for simulations and visualizations in this tutorial
+are available as part of the ICI3D package, prefixed with `het_`. If you wanted
+to try this simulation with different population contact rate distributions,
+you could always create a population that has the same characteristics as
+those returned from `ICI3D::het_population()` and then use that in
+`het_sample()` and re-make the plots using the results.
+
+*Some Rights Reserved*  
+*[CC BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/)*

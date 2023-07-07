@@ -4,7 +4,7 @@
 \alias{launch}
 \title{Launch an ICI3D Tutorial}
 \usage{
-launch(tutorial = c("dynfever"))
+launch(tutorial = c("dynfever", "heterogeneity"))
 }
 \arguments{
 \item{tutorial}{a string: the tutorial name (must be among the defaults)}

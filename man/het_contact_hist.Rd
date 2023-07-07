@@ -4,13 +4,13 @@
 \alias{het_contact_hist}
 \title{Heterogeneous Contact Rate Histogram}
 \usage{
-het_contact_hist(contact_rates, beta_mean, binwidth = 0.1, ...)
+het_contact_hist(contact_rates = numeric(), beta_mean, binwidth = 0.1, ...)
 }
 \arguments{
 \item{contact_rates}{numeric vector; contact rates to plot, e.g. from
 [het_population()]}
 
-\item{beta_mean}{a numeric: the mean contact rate}
+\item{beta_mean}{a numeric, greater than 0: mean contact rate}
 
 \item{binwidth}{The width of the bins. Can be specified as a numeric value
 or as a function that calculates width from unscaled x. Here, "unscaled x"
@@ -75,17 +75,17 @@ a ggplot object
 Plots a histogram of contact rates
 }
 \examples{
-hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-het_plot_hist(hp, beta_mean = 1)
+mean_contacts <- 2
+hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+het_contact_hist(hp, beta_mean = mean_contacts)
 
 }
 \seealso{
 Other heterogeneity: 
 \code{\link{het_finalsize_hist}()},
+\code{\link{het_plot}()},
 \code{\link{het_population}()},
 \code{\link{het_sample}()},
-\code{\link{het_simulate}()},
-\code{\link{sample_pair}()},
-\code{\link{sample_until}()}
+\code{\link{het_simulate}()}
 }
 \concept{heterogeneity}

@@ -7,33 +7,44 @@ NULL
 #'
 #' @param n an integer: the number of individuals to generate
 #'
-#' @param beta_mean a numeric: the mean contact rate
+#' @param beta_mean a numeric, greater than 0: mean contact rate
 #'
-#' @param beta_var a numeric: the variance of the contact rate
+#' @param beta_var a numeric, greater than 0: variance of the contact rate
 #'
-#' @param seed an integer, optional: the random seed to use (if supplied)
+#' @param seed an integer, optional: the random seed to use (if supplied); see
+#' [set.seed()]
 #'
-#' @return a numeric vector of length `n` of contact rates, sorted in descending
+#' @return a numeric vector, length `n`: contact rates, sorted in descending
 #' order
 #'
 #' @details This function generates a heterogeneous population of contact rates
-#' using a gamma distribution.  The mean and variance of the distribution are
-#' transformed into the shape and scale parameters for [rgamma()].
+#' using [rgamma()].  The mean and variance of the distribution are
+#' transformed into the `shape` and `scale` parameters for [rgamma()].
 #'
 #' @family heterogeneity
 #'
 #' @examples
-#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-#' hist(hp)
+#' mean_contacts <- 2
+#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+#' het_contact_hist(hp, beta_mean = mean_contacts)
 #'
 #' @export
 het_population <- function(
   n, beta_mean, beta_var, seed
 ) {
+  # ensure arguments are appropriate
+  n |> check_integer() |> check_positive()
+  beta_mean |> check_numeric() |> check_positive()
+  beta_var |> check_numeric() |> check_positive()
+
+  # set the seed if desired
   if (!missing(seed)) set.seed(seed)
-  scale <- beta_var / beta_mean
-  shape <- beta_mean / scale
-  rgamma(n, shape = shape, scale = scale) |> sort(decreasing = TRUE)
+
+  # transform the arguments, draw gamma deviates, sort from high => low
+  return(
+    rgamma(n, shape = beta_mean^2 / beta_var, scale = beta_var / beta_mean) |>
+    sort(decreasing = TRUE)
+  )
 }
 
 #' @title Heterogeneous Contact Rate Histogram
@@ -50,156 +61,77 @@ het_population <- function(
 #' @return a ggplot object
 #' @family heterogeneity
 #' @examples
-#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-#' het_plot_hist(hp, beta_mean = 1)
+#' mean_contacts <- 2
+#' hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+#' het_contact_hist(hp, beta_mean = mean_contacts)
 #'
 #' @export
 het_contact_hist <- function(
-  contact_rates, beta_mean, binwidth = .1, ...
+  contact_rates = numeric(), beta_mean, binwidth = .1, ...
 ) {
-  return(ggplot(data.table(contact_rates = contact_rates)) +
-    geom_histogram(
+  # check arguments
+  contact_rates |> check_numeric() |> check_positive()
+  beta_mean |> check_numeric() |> check_positive() |> check_scalar()
+
+  # create a minimum scale limit
+  pseudomax <- 2*beta_mean
+
+  # create a plot ...
+  return(
+    ggplot(data.table(contact_rates = contact_rates)) + # from contact rates...
+    geom_blank( # at least shown on c(0, pseudomax) ...
+      aes(lims),
+      data.table(lims = c(0, pseudomax))
+    ) +
+    geom_histogram( # showing a histogram of the contact rates ...
       aes(x = contact_rates, y = after_stat(density)),
       binwidth = binwidth, ...
-    ) + xlab("contact rate (1/day)") +
-    geom_vline(xintercept = beta_mean, color = "red") +
-    theme_bw() + theme(
+    ) +
+    geom_vline(xintercept = beta_mean, color = "red") + # indicating the mean...
+    scale_y_continuous(name = NULL, guide = "none") + # don't show y axis
+    scale_x_continuous(
+      name = "contact rate (1/day)",
+      expand = expansion()
+    ) +
+    theme_bw() + theme( # minimal theme + bigger text
       panel.border = element_blank(),
       axis.title = element_text(size = rel(2)),
       axis.text = element_text(size = rel(2))
-  ))
+    )
+  )
 }
 
 #' @title Heterogeneous Final Size Histogram
 #'
 #' @description Plots a histogram of final sizes from many [het_sample()]s
 #'
-#' @param dt a data.table; the return from [het_sample()]
+#' @param ts a [data.table::data.table()]; the return from [het_sample()]
 #'
-#' @return a ggplot object
+#' @return a [ggplot2::ggplot()] object
 #' @family heterogeneity
 #' @examples
-#' hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-#' samples <- het_sample(hp)
-#' het_finalsize_hist(samples)
+#' hp <- het_population(n = 500, beta_mean = 2, beta_var = 1)
+#' samples <- het_sample(100, hp)
+#' het_finalsize_hist(samples, 10)
 #'
 #' @export
 het_finalsize_hist <- function(ts, binwidth = 5, ...) {
-  maxpop <- ts[1, S+I+R]
+  maxpop <- ts[1, S+I+R] # get the max total population
+  # extract the final sizes; note, since het_simulate allows immune waning, have
+  # to use accumulator state rather than the final `R` value
+  plot_ts <- ts[, .(value = cumulativeI[.N]), by = sample_id ]
+
+  # plot a histogram (y-axis categories, x-axis counts)
   return(
-    ggplot(
-      ts[, .(value = cumulativeI[.N]), by = sample_id ]
-    ) + aes(x = value) + geom_histogram(binwidth = binwidth) +
+    ggplot(plot_ts) +
+    aes(y = value) + geom_histogram(binwidth = binwidth, ...) +
     theme_minimal() + theme(
       axis.title = element_text(size=rel(2)),
       axis.text = element_text(size=rel(2))
-    ) + coord_cartesian(xlim = c(0, maxpop)) +
-    labs(x= "... of size", y = "# of outbreaks")
+    ) + coord_cartesian(ylim = c(0, maxpop), expand = FALSE, clip = "off") +
+    labs(y = "... of size", x = "# of outbreaks")
   )
 }
-
-het.runs.hist <- function(ts) ggplot(
-  ts[,list(`final size` = max(cumulativeI)), by=runid]
-) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
-  theme_minimal() + theme(
-    axis.title = element_text(size=rel(2)),
-    axis.text = element_text(size=rel(2))
-  ) + ylab("# of outbreaks")
-
-#' @title Sample Pairs of Distinct Indices
-#'
-#' @param n positive integer: number of pairs to sample
-#'
-#' @param prob numeric vector: the population weights for sampling each index;
-#' if length(prob) == 1, then treated as the population size and all indices
-#' equally weighted
-#'
-#' @param verbose Print progress messages?
-#'
-#' @return A list with two elements, `source` and `sink`, each of length `n`,
-#' corresponding to the sampled pairs indices
-#'
-#' @family heterogeneity
-#' @examples
-#' draws <- sample_pair(n = 100, prob = 10)
-#'
-#' @export
-sample_pair <- function(n, prob, verbose = FALSE) {
-  if (length(prob) == 1) {
-    sampler <- function(sn) {
-      sample(prob, sn, replace = TRUE)
-    }
-  } else {
-    sampler <- function(sn) {
-      sample(length(prob), sn, replace = TRUE, prob = prob)
-    }
-  }
-  source <- sampler(n)
-  sink <-   sampler(n)
-  redraw <- which(source == sink)
-  while (length(redraw)) {
-    if (verbose) {
-      message(sprintf("sample_pair: redrawing %i ...", length(redraw)))
-    }
-    sink[redraw] <- sampler(length(redraw))
-    redraw <- redraw[which(source[redraw] == sink[redraw])]
-  }
-  return(list(source = source, sink = sink))
-}
-
-#' @title Sample Event Times Until a Maximum Time
-#'
-#' @param maxval a positive numeric: the maximum time to simulate until
-#'
-#' @param meantime a positive numeric: the mean time between events
-#'
-#' @param sampler a function: the sampling distribution for time between events
-#'
-#' @param ... any parameter arguments to `sampler`
-#'
-#' @param oversample a numeric: the amount to oversample by when generating
-#'
-#' @param verbose Print progress messages?
-#'
-#' @return A numeric vector of event times: the cumulative sum of draws from
-#' `sampler` until the last value exceeds `maxval`. That sum is then trimmed to
-#' values `<= maxval`. The first value in the vector is always 0.
-#'
-#' @family heterogeneity
-#' @examples
-#' draws <- sample_until(n = 100, meantime = 1, rexp, rate = 1)
-#' cumsum(draws)
-#'
-#' @export
-sample_until <- function(
-  maxval, meantime, sampler, ...,
-  oversample = 0.1, verbose = FALSE
-) {
-  # generate a vector of interaction times - oversample by 10%
-  expectedevents <- maxval / meantime
-  times <- c(
-    0, cumsum(sampler(ceiling(expectedevents * (1 + oversample)), ...))
-  )
-  # make sure we have enough events - extend by 10% until we do
-  while (times[length(times)] < maxval) {
-    if (verbose) {
-      message(sprintf(
-        "sample_until: current end %d vs maxval %d -> add %i events ...",
-        times[length(times)], maxval, ceiling(expectedevents * oversample)
-      ))
-    }
-    times <- c(
-      times,
-      times[length(times)] +
-        cumsum(sampler(ceiling(expectedevents * oversample), ...))
-    )
-  }
-  # trim off any events that occur after maxval
-  times <- times[times <= maxval]
-
-  return(times)
-}
-
 
 #' @title Simulate Heterogeneous Transmission Model
 #'
@@ -211,102 +143,225 @@ sample_until <- function(
 #'
 #' @param params a list, with `tmax`, `recovery_rate`, and `waning_rate` keys
 #'
+#' @importFrom data.table between
 #' @family heterogeneity
 #' @export
 het_simulate <- function(
   mxdst, params, seed
 ) {
   if (!missing(seed)) { set.seed(seed) }
+  with(params, {
+
   pop.size <- length(mxdst)
-  end.time <- params$tmax
-  gmma <- params$recovery_rate
-  rho <- params$waning_rate
 
-  tloss <- trec <- rep(NaN, pop.size)
+  # create individual state trackers: clocks for recovery & waning
+  trec <- rep(Inf, pop.size)
+  twan <- -trec
+  # ... and who's infectious
+  whichinf <- rep(FALSE, pop.size)
 
-  inf.rate <- sum(mxdst)
+  # an individual is susceptible if:
+  # !whichinf & (twan < 0)
 
-  event.times <- c(0, rexp(ceiling(end.time/inf.rate*1.1), inf.rate))
-  while(sum(event.times) < end.time) event.times <- c(event.times, rexp(ceiling(end.time/inf.rate*0.1), inf.rate))
+  # sample initial infectee, set recovery + waning times
+  tee <- sample.int(pop.size, 1, prob = mxdst)
+  whichinf[tee] <- TRUE
+  trec[tee] <- rexp(1, recovery_rate)
 
-  event.times <- cumsum(event.times)
-  event.times <- event.times[which(event.times <= end.time)]
-
-  stepmax <- length(event.times)
-  S <- c(pop.size-1, rep.int(0, stepmax-1))
-  I <- c(1, rep.int(0, stepmax-1))
-  R <- rep.int(0, stepmax)
-  cumulativeI <- I
-
-  new.ted <- sample.int(pop.size, 1, prob = mxdst)
-  last.time <- 0 # first individual is infected at time 0
-
-  ( last.time + rexp(1, gmma) -> trec[new.ted] ) +
-    ifelse(rho, rexp(1, rho), end.time) -> tloss[new.ted]
-  ## initialize time series data frame
-  #ts <- data.table(day=new.time, S=pop.size-1, I=1, R = 0, cumulativeI=1)
-  #next.time <- data.table::copy(ts)
-  ## calculate current inf rate - should this be changing?  was inside while loop
-
-
-  ## expected samples to get sum(samples) > end.time
-  # times <- rexp(ceiling(end.time*1.1*inf.rate), inf.rate)
-  # while (sum(times) < end.time) times <- c(times, rexp(ceiling(end.time*0.1*inf.rate), inf.rate))
-
-  last.time <- 0
-  for (i in 2:stepmax) {
-    recoveries <- which(trec < last.time)
-    trec[recoveries] <- NaN
-    I[i] <- I[i-1] - length(recoveries)
-    R[i] <- R[i-1] + length(recoveries)
-    S[i] <- S[i-1]
-    cumulativeI[i] <- cumulativeI[i-1]
-
-    who.loss <- which(tloss < last.time)
-    if (ilosses <- length(who.loss)) {
-      tloss[who.loss] <- NaN
-      R[i] <- R[i] - ilosses
-      S[i] <- S[i] + ilosses
-    }
-
-    cur.tor <- sample(pop.size, 1, prob = mxdst)
-    ## has this id been infected?
-    if(!(is.nan(tloss[cur.tor]) | is.nan(trec[cur.tor]))) {
-      # choose from everyone except infec*tor*
-      new.ted <- sample((1:pop.size)[-cur.tor], 1, prob = mxdst[-cur.tor])
-      if(is.nan(tloss[new.ted])) { ## is this ID currently susceptible?
-        ## then infect them
-        S[i] <- S[i] - 1
-        I[i] <- I[i] + 1
-        cumulativeI[i] <- cumulativeI[i] + 1
-        # infected @ new.time, recover @ infected + recovery draw, loss @ recover + loss draw
-        ( event.times[i] + rexp(1, gmma) -> trec[new.ted] ) +
-          ifelse(rho, rexp(1, rho), end.time) -> tloss[new.ted]
-      }
-    }
-    if (!I[i]) break;
-    last.time <- event.times[i]
+  if (exists("waning_rate") && (waning_rate > 0)) {
+    wan_sample <- function() rexp(1, waning_rate)
+  } else {
+    wan_sample <- function() Inf
   }
 
+  twan[tee] <- trec[tee] + wan_sample()
+
+  # create loop variables
+  con.rate <- sum(mxdst[whichinf])
+  icur <- 1
+  tcur <- 0
+  len <- 1
+
+  # create containers to update with changes when events occur; these are Deltas
+  event.times <- list(0)
+  S <- list(pop.size-1)
+  I <- list(1)
+  R <- list(0)
+  cumulativeI <- list(1)
+
+  while ((icur > 0) & (tcur < tmax)) {
+    nextt <- rexp(1, con.rate)
+    isrecovery <- any(nextt > trec)
+
+    # if a recovery would happen first, amend event time to recovery ...
+    if (isrecovery) {
+
+      # find the individual + associated recovery time ...
+      irec <- which.min(trec)
+      nextt <- trec[irec]
+
+      # update the infectious individuals + recompute contacting rate
+      whichinf[irec] <- FALSE
+      trec[irec] <- Inf
+      con.rate <- sum(mxdst[whichinf])
+
+      # update loop control information
+      icur <- icur - 1
+
+    }
+
+    # update all the timers accordingly, and identify any waned protection
+    tcur <- tcur + nextt
+    trec <- trec - nextt
+    wanes <- between(twan, 0, nextt)
+    want <- sort(twan[wanes]) # for aggregation, we care about timing, not id
+    twan <- twan - nextt
+
+
+    # wanes => R -> S; if any waning:
+    if (length(want)) {
+
+      # change to relative delays
+      nextt <- nextt - want[length(want)] # happens some Delta after last want
+      want <- c(want[1], diff(want))
+
+      # make the new indices + update len
+      app <- len + seq_along(want)
+      len <- len + length(want)
+
+      # update Delta containers; n.b. [] vs [[]] access for slicing
+      R[app] <- -1 # move from R
+      S[app] <- 1  # to S
+      event.times[app] <- want # at relative times
+      # no changes (yet) to I
+      I[app] <- 0
+      cumulativeI[app] <- 0
+
+    }
+
+    if (isrecovery) {
+      # recovery an I to R at the relative time; no change to cumulative inc, S
+      I[[len + 1]] <- -1
+      R[[len + 1]] <- 1
+      event.times[[len + 1]] <- nextt
+
+      S[[len + 1]] <- 0
+      cumulativeI[[len + 1]] <- 0
+      len <- len + 1
+    } else {
+      # choose infector
+      tor <- which(whichinf)[sample(icur, size = 1, prob = mxdst[whichinf])]
+      # choose infectee - draw from n-1, then shift if necessary
+      tee <- sample(pop.size - 1, 1, prob = mxdst[-tor])
+      if (tee >= tor) tee <- tee + 1
+
+      # if tee infectable => infect
+      if (!whichinf[tee] & (twan[tee] < 0)) {
+        # infect tee, update the infectious contact rate
+        whichinf[tee] <- TRUE
+        trec[tee] <- rexp(1, rate = recovery_rate)
+        twan[tee] <- trec[tee] + wan_sample()
+        con.rate <- sum(mxdst[whichinf])
+
+        # update state records
+        S[[len + 1]] <- -1
+        I[[len + 1]] <- 1
+        R[[len + 1]] <- 0
+        event.times[[len + 1]] <- nextt
+        cumulativeI[[len + 1]] <- 1
+        len <- len + 1
+
+        # update loop variable
+        icur <- icur + 1
+      } # otherwise, no change
+    }
+    # done with one time draw ...
+  } # end simulation loop
+
+  # potentially extend to tmax ...
+  day <- cumsum(event.times)
+  if (day[length(day)] < tmax) {
+    day <- c(day, tmax)
+    S[[len+1]] <- 0
+    I[[len+1]] <- 0
+    R[[len+1]] <- 0
+    cumulativeI[[len+1]] <- 0
+  }
+
+  # convert deltas to time series, filter to tmax
   return(data.table(
-    day = c(event.times[1:i], end.time),
-    S = S[c(1:i, i)], I = I[c(1:i, i)], R = R[c(1:i, i)],
-    cumulativeI = cumulativeI[c(1:i, i)]
-  ))
+    day = day,
+    S = cumsum(S), I = cumsum(I), R = cumsum(R),
+    cumulativeI = cumsum(cumulativeI)
+  )[ day <= tmax ])
+})
 }
 
-base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric(), runstate=factor())) ggplot() +
-  aes(x=day, alpha=runstate, color=state, y=value, group=interaction(runid, state)) +
-  scale_alpha_manual(values=c(past=0.3, current=1)) +
-  scale_x_continuous(limits = c(0, end.time)) +
-  scale_y_continuous(limits = c(0, maxpop)) +
-  theme_minimal() + theme(
-    axis.title = element_text(size=rel(2)),
-    axis.text = element_text(size=rel(2))
-  ) +
-  guides(alpha="none") + theme(legend.position = "bottom", legend.direction = "horizontal") +
-  geom_line(data=dt)
-
+#' @title Time Series Plot for Heterogeneity Tutorial
+#'
+#' @description
+#' Produces a standard compartment time series plot for outputs from
+#' [het_sample()].
+#'
+#' @param ts a [data.table()], as yielded by [het_sample()]
+#'
+#' @return a [ggplot2::ggplot()] object
+#'
+#' @export
+#' @family heterogeneity
+#' @examples
+#' het_plot(het_sample(30))
+#'
+het_plot <- function(ts) {
+  tmax <- ts[, max(day)]
+  maxpop <- ts[1, S + I + R]
+  n <- ts[, max(sample_id)]
+  long_dt <- ts[, .SD, .SDcols = -patterns("^cumulative")] |>
+    data.table::melt.data.table(
+      id.vars = c("sample_id", "day"), variable.name = "state"
+    )
+  rug_dt <- ts[,
+    if (any(I == 0)) .SD[I==0][1] else .SD[.N], by = sample_id
+  ][, .SD, .SDcols = -patterns("^cumulative")] |>
+    data.table::melt.data.table(
+      id.vars = c("sample_id", "day"), variable.name = "state"
+    )
+  return(ggplot(long_dt) +
+    aes(
+      x = day, y = value,
+      color = state, group = interaction(sample_id, state)
+    ) +
+    geom_step(alpha = sqrt(1/n)) +
+    geom_rug(
+      data = rug_dt,
+      alpha = (1/n)^(1/3), outside = TRUE,
+      sides = "r"
+    ) +
+    geom_rug(
+      data = subset(rug_dt, state == "I"),
+      alpha = (1/n)^(1/3), outside = TRUE,
+      sides = "t"
+    ) +
+    coord_cartesian(
+      xlim = c(0, tmax),
+      ylim = c(0, maxpop),
+      clip = "off",
+      expand = FALSE
+    ) +
+    scale_x_continuous("Day") +
+    scale_y_continuous("Individuals") +
+    scale_color_discrete(
+      name = NULL, guide = guide_legend(override.aes = list(alpha = 1))
+    ) +
+    scale_alpha_continuous(guide = "none", range = c(0.05, 1)) +
+    theme_minimal() + theme(
+      axis.title = element_text(size = rel(2)),
+      axis.text = element_text(size = rel(2)),
+      plot.margin = margin(t = 1, r = 1, unit = "line")
+    ) +
+    theme(legend.position = "left", legend.direction = "vertical")
+  )
+}
 
 #' @title Sample [het_simulate()]
 #'
@@ -316,6 +371,7 @@ base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day =
 #' @param n a positive integer, the number of samples to simulate
 #'
 #' @inheritParams het_simulate
+#'
 #' @importFrom parallel mclapply
 #' @importFrom data.table rbindlist melt.data.table
 #' @family heterogeneity
@@ -330,6 +386,11 @@ het_sample <- function(
   params = list(tmax = 5, recovery_rate = 1, waning_rate = 0)
 ) {
 
+  # check input parameters
+  n |> check_integer() |> check_positive() |> check_scalar()
+  mxdst |> check_numeric() |> check_positive()
+
+  # create a sample frame => for each sample, run het_simulate
   ts <- seq_len(n) |> parallel::mclapply(
     FUN = \(sid, mxdst, params) het_simulate(mxdst, params, sid),
     mxdst = mxdst, params = params,
@@ -339,270 +400,3 @@ het_sample <- function(
   return(ts |> setkey(sample_id, day))
 
 }
-
-het.ui <- shinyUI({
-  button34 <- actionButton("part34click", "Run")
-  fluidPage(
-  titlePanel('Heterogeneity Tutorial'),
-  navlistPanel(
-    tabPanel('Overview', includeMarkdown("inst/hetTut/overview.md"), br()),
-    tabPanel('Part 1: Low Variance',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/low.md"))),
-      fluidRow(
-        column(3, numericInput("lowsamples", label = "Add runs:", value = 1, min = 1, max = 50, step = 1)),
-        column(3, actionButton("lowclick", "Run")),
-        column(3, textOutput("lowruns", inline = T)),
-        column(3, textOutput("lowTODO", inline = T))
-      ),
-      fluidRow(
-        column(4, plotOutput("lowhist")), column(4, plotOutput("lowseries")), column(4, plotOutput("lowsizes"))
-      ),
-      fluidRow(column(12, includeMarkdown("inst/hetTut/more.md"))),
-      br()
-    ),
-    tabPanel('Part 2: Changing Variance and Population',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/variance.md"))),
-      fluidRow(column(3, numericInput(
-          "part3var",
-          label = "Variance?",
-          value=0.001, min = 0.0001, max = 1
-        )),
-        column(3, numericInput(
-          "part4var",
-          label = "Population?",
-          value=100, min = 10, max = 500, step = 1
-        )),
-        column(2, button34),
-        column(2, textOutput("part34runs", inline = T)),
-        column(2, textOutput("part34TODO", inline = T))
-      ),
-      fluidRow(
-        column(4, plotOutput("part34hist")),
-        column(4, plotOutput("part34series")),
-        column(4, plotOutput("part34sizes"))
-      ),
-      fluidRow(
-
-      ),
-      br()
-    ),
-    tabPanel('Part 3: Heterogeneity & R0',
-      fluidRow(column(12, includeMarkdown("inst/hetTut/R0.md"))),
-      fluidRow(
-        column(3,numericInput(
-          "part5bmn",
-          label = "beta.mean?",
-          value=2, min = .1, max = 10
-        )),
-        column(3,numericInput(
-          "part5bvar",
-          label = "beta.var?",
-          value=.1, min = 1e-6, max = 10
-        )),
-        column(3,numericInput(
-          "part5pop",
-          label = "population?",
-          value=100, min = 10, max = 500, step = 1
-        )),
-        column(3,numericInput(
-          "part5gmma",
-          label = "gamma?",
-          value=1, min = 1e-6, max = 10
-        ))
-      ),
-      fluidRow(
-        column(3,numericInput(
-          "part5rho",
-          label = "rho?",
-          value=0, min = 0, max = 10
-        )),
-        column(3, numericInput("part5samples", label = "runs?", value = 10, min = 1, max = 50, step = 1)),
-        column(2, actionButton("part5click", "Run")),
-        column(2, textOutput("part5runs", inline = T)),
-        column(2, textOutput("part5TODO", inline = T))
-      ),
-      fluidRow(
-        column(4, plotOutput("part5hist")),
-        column(4, plotOutput("part5series")),
-        column(4, plotOutput("part5sizes"))
-      ),
-      br()
-    ), widths = c(2, 10)
-  ))
-})
-
-emptyseries <- data.table(
-  runid=integer(),
-  day=numeric(),
-  runstate=factor(levels=c("past","current")),
-  state=factor(levels=c("S","I","R")),
-  value=integer()
-)
-emptydistro <- data.table(runid=integer(), cumulativeI=integer())
-
-lowmxdst <- het_population(n = 100, beta_mean = 2, beta_var = 0.001)
-
-allowedIterations <- 100
-
-part34samples <- 30
-
-updateSeries <- function(old, new) {
-  rbind(
-    old[, runstate := "past"],
-    new[state != "cumulativeI"]
-  )
-}
-
-het.server <- shinyServer({
-
-  function(input, output, session) {
-
-    cycleTracking <- reactiveValues(
-      lowwas = 0, lowcycles = 0,
-      part34was = 0, part34cycles = 0,
-      part5was = 0, part5cycles = 0
-    )
-
-    rvs <- reactiveValues(
-      lowseries = emptyseries,
-      lowdistro = emptydistro,
-      lowindex = 0,
-      part34mxdst = het_population(n = 100, beta_mean = 2, beta_var = 0.001),
-      part34distro = emptydistro,
-      part34series = emptyseries,
-      part34index = 0,
-      part5distro = emptydistro,
-      part5series = emptyseries,
-      part5index = 0
-    )
-
-    observe({
-
-      if (input$lowclick - isolate(cycleTracking$lowwas)) {
-        cycleTracking$lowcycles <- isolate(input$lowsamples)
-        cycleTracking$lowwas <- input$lowclick
-      }
-
-      # depend on all buttons
-      # lock all buttons
-
-      # do part 12 heavy lifting, if there are cycles available & there's work to do
-      isolate(if (cycleTracking$lowcycles) {
-
-          addedts <- het.epidemic.runs(lowmxdst, rvs$lowindex, end.time = 10, gmma = 1)
-
-          rvs$lowseries <- updateSeries(rvs$lowseries, addedts)
-          rvs$lowdistro <- rbind(
-            rvs$lowdistro,
-            addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
-          )
-          # if done, rvs$lowTODO <- FALSE
-          rvs$lowindex <- rvs$lowindex + 1
-          cycleTracking$lowcycles <- cycleTracking$lowcycles - 1
-      })
-
-      if (isolate(cycleTracking$lowcycles)) invalidateLater(0, session)
-    })
-
-    observe({
-      input$part34click
-      rvs$part34index <- 0
-      rvs$part34mxdst   <- het_population(n = isolate(input$part4var), beta_mean = 2, beta_var = isolate(input$part3var))
-      rvs$part34series  <- emptyseries
-      rvs$part34distro  <- emptydistro
-    })
-
-    if (!isolate(cycleTracking$lowcycles)) observe({
-
-      if (input$part34click - isolate(cycleTracking$part34was)) {
-        cycleTracking$part34cycles <- part34samples
-        cycleTracking$part34was <- input$part34click
-      }
-
-      isolate(if(cycleTracking$part34cycles) { # do part 34 heavy lifting, if there are cycles available & there's work to do
-
-        addedts <- het.epidemic.runs(rvs$part34mxdst, cycleTracking$part34cycles, end.time = 10, gmma = 1)
-
-        rvs$part34series <- updateSeries(rvs$part34series, addedts)
-
-        rvs$part34distro <- rbind(
-          rvs$part34distro,
-          addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
-        )
-
-        rvs$part34index <- rvs$part34index + 1
-        cycleTracking$part34cycles <- cycleTracking$part34cycles - 1
-      })
-
-      if (cycleTracking$part34cycles) invalidateLater(0, session)
-
-    })
-
-    observe({
-      input$part5click
-      rvs$part5index <- 0
-      rvs$part5mxdst   <- het_population(
-        n = isolate(input$part5pop),
-        beta_mean = isolate(input$part5bmn),
-        beta_var = isolate(input$part5bvar)
-      )
-      rvs$part5series  <- emptyseries
-      rvs$part5distro  <- emptydistro
-    })
-
-    if (!isolate(cycleTracking$lowcycles | cycleTracking$part34cycles)) observe({
-
-      if (isolate(cycleTracking$part5was) != input$part5click) {
-        cycleTracking$part5cycles <- isolate(input$part5samples)
-        cycleTracking$part5was <- input$part5click
-      }
-
-      isolate(if(cycleTracking$part5cycles) { # do part 5 heavy lifting, if there are cycles available & there's work to do
-
-        addedts <- het.epidemic.runs(rvs$part5mxdst, cycleTracking$part5cycles, end.time = 10, gmma = input$part5gmma, rho = input$part5rho)
-        rvs$part5series <- updateSeries(rvs$part5series, addedts)
-
-        rvs$part5distro <- rbind(
-          rvs$part5distro,
-          addedts[state=="cumulativeI", list(cumulativeI=value[.N]), by=runid]
-        )
-
-        rvs$part5index <- rvs$part5index + 1
-        cycleTracking$part5cycles <- cycleTracking$part5cycles - 1
-      })
-
-      if (cycleTracking$part5cycles) invalidateLater(0, session)
-
-    })
-
-    output$lowTODO <- renderText(ifelse(cycleTracking$lowcycles, "Running", ""))
-    output$lowruns <- renderText(sprintf("Total Runs: %d", rvs$lowindex))
-
-    output$lowhist <- renderPlot(het_plot_hist(lowmxdst, beta_mean = 2))
-    output$lowseries <- renderPlot(base.het.plot(10, 100, dt=rvs$lowseries))
-    output$lowsizes <- renderPlot({
-      if(rvs$lowdistro[,.N != 0]) het.runs.hist(rvs$lowdistro)
-    })
-
-    output$part34TODO <- renderText(ifelse(cycleTracking$part34cycles, "Running", ""))
-    output$part34runs <- renderText(sprintf("Total Runs: %d", rvs$part34index))
-
-    output$part34hist <- renderPlot(het_plot_hist(rvs$part34mxdst, beta_mean = 2))
-    output$part34series <- renderPlot(base.het.plot(10, isolate(input$part4var), dt=rvs$part34series))
-    output$part34sizes <- renderPlot({
-      if(rvs$part34distro[,.N != 0]) het.runs.hist(rvs$part34distro)
-    })
-
-    output$part5TODO <- renderText(ifelse(cycleTracking$part5cycles, "Running", ""))
-    output$part5runs <- renderText(sprintf("Total Runs: %d", rvs$part5index))
-
-    output$part5hist <- renderPlot(het_plot_hist(rvs$part5mxdst, beta_mean = isolate(input$part5bmn)))
-    output$part5series <- renderPlot(base.het.plot(10, isolate(input$part5pop), dt=rvs$part5series))
-    output$part5sizes <- renderPlot({
-      if(rvs$part5distro[,.N != 0]) het.runs.hist(rvs$part5distro)
-    })
-
-  }})
-
-#' @export
-heterogeneityTutorial <- function() shinyApp(ui = het.ui, server = het.server)

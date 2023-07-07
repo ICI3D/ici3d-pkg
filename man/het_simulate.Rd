@@ -19,9 +19,8 @@ combination.
 Other heterogeneity: 
 \code{\link{het_contact_hist}()},
 \code{\link{het_finalsize_hist}()},
+\code{\link{het_plot}()},
 \code{\link{het_population}()},
-\code{\link{het_sample}()},
-\code{\link{sample_pair}()},
-\code{\link{sample_until}()}
+\code{\link{het_sample}()}
 }
 \concept{heterogeneity}

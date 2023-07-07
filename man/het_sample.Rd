@@ -29,9 +29,8 @@ hetruns[day == 5.0]
 Other heterogeneity: 
 \code{\link{het_contact_hist}()},
 \code{\link{het_finalsize_hist}()},
+\code{\link{het_plot}()},
 \code{\link{het_population}()},
-\code{\link{het_simulate}()},
-\code{\link{sample_pair}()},
-\code{\link{sample_until}()}
+\code{\link{het_simulate}()}
 }
 \concept{heterogeneity}

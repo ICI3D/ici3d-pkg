@@ -7,27 +7,26 @@
 het_finalsize_hist(ts, binwidth = 5, ...)
 }
 \arguments{
-\item{dt}{a data.table; the return from [het_sample()]}
+\item{ts}{a [data.table::data.table()]; the return from [het_sample()]}
 }
 \value{
-a ggplot object
+a [ggplot2::ggplot()] object
 }
 \description{
 Plots a histogram of final sizes from many [het_sample()]s
 }
 \examples{
-hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-samples <- het_sample(hp)
-het_finalsize_hist(samples)
+hp <- het_population(n = 500, beta_mean = 2, beta_var = 1)
+samples <- het_sample(100, hp)
+het_finalsize_hist(samples, 10)
 
 }
 \seealso{
 Other heterogeneity: 
 \code{\link{het_contact_hist}()},
+\code{\link{het_plot}()},
 \code{\link{het_population}()},
 \code{\link{het_sample}()},
-\code{\link{het_simulate}()},
-\code{\link{sample_pair}()},
-\code{\link{sample_until}()}
+\code{\link{het_simulate}()}
 }
 \concept{heterogeneity}

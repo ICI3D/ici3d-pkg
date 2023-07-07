@@ -107,7 +107,7 @@ theyear <- function(date = Sys.Date()) {
 #' @param tutorial a string: the tutorial name (must be among the defaults)
 #'
 #' @export
-launch <- function(tutorial = c("dynfever")) {
+launch <- function(tutorial = c("dynfever", "heterogeneity")) {
   tutorial <- match.arg(tutorial)
   learnr::run_tutorial(name = tutorial, package = "ICI3D")
 }

@@ -9,14 +9,15 @@ het_population(n, beta_mean, beta_var, seed)
 \arguments{
 \item{n}{an integer: the number of individuals to generate}
 
-\item{beta_mean}{a numeric: the mean contact rate}
+\item{beta_mean}{a numeric, greater than 0: mean contact rate}
 
-\item{beta_var}{a numeric: the variance of the contact rate}
+\item{beta_var}{a numeric, greater than 0: variance of the contact rate}
 
-\item{seed}{an integer, optional: the random seed to use (if supplied)}
+\item{seed}{an integer, optional: the random seed to use (if supplied); see
+[set.seed()]}
 }
 \value{
-a numeric vector of length `n` of contact rates, sorted in descending
+a numeric vector, length `n`: contact rates, sorted in descending
 order
 }
 \description{
@@ -24,21 +25,21 @@ Generates a heterogeneous population of contact rates
 }
 \details{
 This function generates a heterogeneous population of contact rates
-using a gamma distribution.  The mean and variance of the distribution are
-transformed into the shape and scale parameters for [rgamma()].
+using [rgamma()].  The mean and variance of the distribution are
+transformed into the `shape` and `scale` parameters for [rgamma()].
 }
 \examples{
-hp <- het_population(n = 1000, beta_mean = 1, beta_var = 1)
-hist(hp)
+mean_contacts <- 2
+hp <- het_population(n = 1000, beta_mean = mean_contacts, beta_var = .1)
+het_contact_hist(hp, beta_mean = mean_contacts)
 
 }
 \seealso{
 Other heterogeneity: 
 \code{\link{het_contact_hist}()},
 \code{\link{het_finalsize_hist}()},
+\code{\link{het_plot}()},
 \code{\link{het_sample}()},
-\code{\link{het_simulate}()},
-\code{\link{sample_pair}()},
-\code{\link{sample_until}()}
+\code{\link{het_simulate}()}
 }
 \concept{heterogeneity}
