@@ -12,13 +12,13 @@ vignette: >
 This tutorial simulates a simple population model where mortality is the only process. The differential equation version of the model is:
 
 $$
-{dN \over dt} = - \mu N
+{dN \over dt} = - \mu N \quad\rightarrow\quad N = N_0e^{-\mu t}
 $$
 
 where $N$ is the population size as a function of time $t$ and $\mu$ is the mortality rate.
 
-This R code defines a function that calculates the population over a time range, using the analytical solution to the differential equation:
-```r
+This code defines a function that calculates the population over a time range, using the analytical solution to the differential equation:
+```{r}
 analytic <- function(
   initial = initialPopulationSize,
   rate = mortalityRate,
@@ -35,7 +35,8 @@ analytic <- function(
 ```
 
 This R code defines a function that calculates the population over a time range, using a discrete time approximation to the differential equation:
-```r
+
+```{r}
 discreteTime <- function(
   initial = initialPopulationSize,
   rate = mortalityRate,
@@ -45,7 +46,7 @@ discreteTime <- function(
   tt <- 0
   pop <- initial
   ts <- data.frame(time = tt, populationSize = pop)
-  while (tt<maxT){
+  while (tt < maxT) {
     nextt <- tt + stepSize
     nextpop <- pop - rate*pop*stepSize
     ts <- rbind(
@@ -59,7 +60,8 @@ discreteTime <- function(
 ```
 
 This R code defines a function that calculates the population over a time range, using a stochastic simulation of the process represented by the differential equation model:
-```r
+
+```{r}
 individual <- function(
   initial = initialPopulationSize,
   rate = mortalityRate,
@@ -78,7 +80,8 @@ individual <- function(
 ```
 
 Set the parameter values
-```r
+
+```{r}
 initialPopulationSize <- 10 # number of individuals
 mortalityRate <- 0.05       # per capital deaths per day
 timeStep <- 1								# days
@@ -86,7 +89,8 @@ maxTime <- 30								# days
 ```
 
 Setup plotting
-```r
+
+```{r}
 par(bty='L',lwd=3,mar=c(4,4,1,1))
 plot(NA,NA,ylim=c(0,initialPopulationSize),xlim=c(0,maxTime),
      ylab='Population size',xlab='Time')
@@ -94,7 +98,8 @@ plotter <- function(ts, col) with(ts, lines(time, populationSize, col=col))
 ```
 
 Now run the three functions to see what you get
-```r
+
+```{r}
 plotter(analytic(), col="black")
 plotter(discreteTime(), col="green")
 plotter(individual(), col="red")
@@ -116,7 +121,7 @@ Compartments: (S,I,R) = (susceptible, infectious, removed)
 | Infection (S)         | (S, I, R)->(S-1, I+1, R)  | $\beta I S$ |
 | Recovery/Removal (I)  | (S, I, R)->(S, I-1, R+1)  | $\gamma I$  |
 
-```r
+```{r}
 transitions <- list(
   spillover = c(S = -1, I =  1, R = 0),
   infection = c(S = -1, I =  1, R = 0),
@@ -125,18 +130,18 @@ transitions <- list(
 )
 ```
 
-```r
-N=50   # population size
+```{r}
+N = 50   # population size
 
-parms=list(
-  lambda=.02,      # spillover rate
-  beta=.2,      	 # contact rate
-  gamma=.1        # recovery rate
+parms = list(
+  lambda = 0.02,     # spillover rate
+  beta = 0.2,      	 # contact rate
+  gamma = 0.1        # recovery rate
 )
 ```
 
-```r
-event <- function(prevevent, params){
+```{r}
+event <- function(prevevent, params) {
   with(c(prevevent, params),{
     # update rates
     rates <- c(
@@ -174,7 +179,7 @@ event <- function(prevevent, params){
 }
 ```
 
-```r
+```{r}
 simulateSIR <- function(t,y,params){
   with(as.list(y),{
     ts <- data.frame(
@@ -192,9 +197,9 @@ simulateSIR <- function(t,y,params){
 }
 ```
 
-```r
-final.time=400
-parms=parms
+```{r}
+final.time = 400
+parms = parms
 
 # run the simulation
 tsTest <- simulateSIR(final.time, c(S=N-1,I=1,R=0), parms)
