@@ -11,11 +11,10 @@ runtime: shiny
 
 ```{r, echo=FALSE, message=FALSE}
 library(ICI3D)
+
 hivdat <- system.file("hiv", "HIVtutorial.Rdata", package="ICI3D")
 attach(hivdat)
-```
 
-```{r, echo=FALSE, message=FALSE}
 require(deSolve)
 startYear <- 1975
 endYear <- 2025
@@ -30,19 +29,17 @@ model_display <- function(fun) {
   cat("```\n")
 }
 ```
-<br>
 
 ## Overview {.tabset}
 
 <div class="container-fluid" align="left">
 <div class="row">
-<div class="col-lg-8" padding="10px">
 
+<div class="col-lg-8" padding="10px">
 In this tutorial, we will fit a series of models with different model structures to HIV prevalence data from antenatal clinics (ANC data). **You should first complete the tutorial using the Harare data. If you have time, you can then move on to repeat the exercise with one of the other datasets.** In this tutorial, we'll fit the data _by eye_, which is not a very rigorous approach but is a good way to develop an intution for the model-fitting process. Please scroll down for detailed instructions.
 </div>
 
 <div class="col-lg-4">
-<div style="width:218px">
 ```{r, echo=FALSE, message=FALSE}
 inputPanel(
   selectInput("useSite", label = "Dataset for fitting:",
@@ -50,7 +47,7 @@ inputPanel(
 )
 ```
 </div>
-</div>
+
 </div>
 </div>
 
