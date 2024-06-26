@@ -271,26 +271,38 @@ het.run <- function(
     if (curI == 0) break;
   }
 
-  return(data.table(
+  res_dt <- if (event.times[i] < tmax) data.table(
+    runid = seed,
+    day = c(event.times[1:i], tmax),
+    S = cumsum(c(delS[1:i], 0)),
+    I = cumsum(c(delI[1:i], 0)),
+    R = cumsum(c(delR[1:i], 0)),
+    cumulativeI = cumsum(c(cumI[1:i], 0))
+  ) else data.table(
     runid = seed,
     day = event.times[1:i],
     S = cumsum(delS[1:i]),
     I = cumsum(delI[1:i]),
     R = cumsum(delR[1:i]),
     cumulativeI = cumsum(cumI[1:i])
-  ))
+  )
+
+  return(res_dt)
 }
 
 base.het.plot <- function(end.time, maxpop, dt=data.table(runid=integer(), day = numeric(), state=factor(), value=numeric(), runstate=factor())) ggplot() +
   aes(x=day, alpha=runstate, color=state, y=value, group=interaction(runid, state)) +
   scale_alpha_manual(values=c(past=0.3, current=1)) +
   scale_x_continuous(limits = c(0, end.time)) +
-  scale_y_continuous(limits = c(0, maxpop)) +
+  scale_y_continuous(NULL, limits = c(0, maxpop)) +
+  scale_color_manual(NULL, values = c(S = "dodgerblue", I = "firebrick", R = "darkgreen")) +
   theme_minimal() + theme(
+    legend.position.inside = c(1, 0.5), legend.justification.inside = c(1, 0.5),
+    legend.direction = "vertical",
     axis.title = element_text(size=rel(2)),
     axis.text = element_text(size=rel(2))
   ) +
-  guides(alpha="none") + theme(legend.position = "bottom", legend.direction = "horizontal") +
+  guides(alpha="none") +
   geom_line(data=dt)
 
 
@@ -311,7 +323,7 @@ het.epidemic.runs <- function(
 
 het.runs.hist <- function(ts) ggplot(
   ts[,list(`final size` = max(cumulativeI)), by=runid]
-) + aes(x=`final size`) + geom_histogram(binwidth = 5) +
+) + aes(x=`final size`) + geom_histogram(binwidth = 5, fill = "firebrick") +
   theme_minimal() + theme(
     axis.title = element_text(size=rel(2)),
     axis.text = element_text(size=rel(2))
