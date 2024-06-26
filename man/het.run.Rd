@@ -8,7 +8,7 @@ het.run(mxdst, tmax, gmma, rho = 0, seed = NULL)
 }
 \arguments{
 \item{mxdst}{A numeric vector of contact rates, as produced by
-[het.population()].}
+\code{\link[=het.population]{het.population()}}.}
 
 \item{tmax}{The maximum time to simulate until}
 

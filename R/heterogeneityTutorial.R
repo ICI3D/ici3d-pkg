@@ -1,4 +1,6 @@
-#' @import data.table ggplot2 shiny
+#' @import data.table
+#' @import ggplot2
+#' @import shiny
 NULL
 
 #' @title Sample Population with Heterogeneous Contact Rates
@@ -48,7 +50,7 @@ het.population <- function(
 #' @inheritDotParams ggplot2::geom_histogram
 #'
 #' @return A `ggplot` object
-#' 
+#'
 #' @family heterogeneity
 #' @export
 het.hist <- function(
@@ -114,11 +116,11 @@ sample_pair <- function(n, prob, verbose = FALSE) {
 #' @title Sample Event Times Until a Maximum Time
 #'
 #' @param maxval a positive numeric: the maximum time to simulate until
-#' 
+#'
 #' @param meantime a positive numeric: the mean time between events
-#' 
+#'
 #' @param sampler a function: the sampling distribution for time between events
-#' 
+#'
 #' @param ... any parameter arguments to `sampler`
 #'
 #' @return A numeric vector of event times: the cumulative sum of draws from
@@ -171,9 +173,9 @@ sample_until <- function(
 #' @param rho The mean immunity loss rate (R -> S transition rate)
 #'
 #' @return A data.table
-#' 
+#'
 #' @family heterogeneity
-#' @export 
+#' @export
 #' @examples
 #' het.run(
 #'   mxdst = het.population(n = 100, beta.mean = 2, beta.var = 0.001),
@@ -315,9 +317,7 @@ het.runs.hist <- function(ts) ggplot(
     axis.text = element_text(size=rel(2))
   ) + ylab("# of outbreaks")
 
-het.ui <- shinyUI({
-  button34 <- actionButton("part34click", "Run")
-  fluidPage(
+het.ui <- fluidPage(
   titlePanel('Heterogeneity Tutorial'),
   navlistPanel(
     tabPanel('Overview', includeMarkdown("inst/hetTut/overview.md"), br()),
@@ -347,7 +347,7 @@ het.ui <- shinyUI({
           label = "Population?",
           value=100, min = 10, max = 500, step = 1
         )),
-        column(2, button34),
+        column(2, actionButton("part34click", "Run")),
         column(2, textOutput("part34runs", inline = T)),
         column(2, textOutput("part34TODO", inline = T))
       ),
@@ -403,8 +403,7 @@ het.ui <- shinyUI({
       ),
       br()
     ), widths = c(2, 10)
-  ))
-})
+))
 
 emptyseries <- data.table(
   runid=integer(),
@@ -579,5 +578,7 @@ het.server <- shinyServer({
 
   }})
 
+#' @title Start Heterogeniety Tutorial
+#'
 #' @export
 heterogeneityTutorial <- function() shinyApp(ui = het.ui, server = het.server)

@@ -13,12 +13,12 @@ sample_until(maxval, meantime, sampler, ..., oversample = 0.1, verbose = FALSE)
 
 \item{sampler}{a function: the sampling distribution for time between events}
 
-\item{...}{any parameter arguments to `sampler`}
+\item{...}{any parameter arguments to \code{sampler}}
 }
 \value{
 A numeric vector of event times: the cumulative sum of draws from
-`sampler` until the last value exceeds `maxval`. That sum is then trimmed to
-values `<= maxval`. The first value in the vector is always 0.
+\code{sampler} until the last value exceeds \code{maxval}. That sum is then trimmed to
+values \verb{<= maxval}. The first value in the vector is always 0.
 }
 \description{
 Sample Event Times Until a Maximum Time

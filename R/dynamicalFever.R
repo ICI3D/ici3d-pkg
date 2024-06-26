@@ -1,4 +1,7 @@
-#' @import data.table ggplot2 shiny
+#' @import data.table
+#' @import ggplot2
+#' @import shiny
+NULL
 
 epi.duration <- function(epi=run.example()) with(epi, {
   c(
@@ -7,7 +10,7 @@ epi.duration <- function(epi=run.example()) with(epi, {
   )
 })
 
-plot.cases <- function(epi=run.example()){
+plot_cases <- function(epi=run.example()){
   barplot(epi$Cases.Pop1,names.arg=epi$Time,
           cex.lab=2,
           ylim=c(0,200),
@@ -30,13 +33,13 @@ plot.cases <- function(epi=run.example()){
   axis(1,bb[seq(0,30,5)+1],seq(0,30,5),cex.axis = 1.1,xpd=T,line=.2)
 }
 
-plot.example <- function(epi=run.example(),plot.Re=FALSE){
+plot_example <- function(epi=run.example(),plot.Re=FALSE){
   if(plot.Re){
     par(mar=c(5,5,2,1),mfrow=c(3,2))
   }else{
     par(mar=c(5,5,2,1),mfrow=c(2,2))
   }
-  plot.cases(epi)
+  plot_cases(epi)
   plot(epi$Time,epi$FOI.Pop1,
        type='s',      # Use a 'step' plot because time is treated as discrete
        bty='n',
@@ -158,7 +161,7 @@ vax.eff <- function(VAXPCT,POP,REPS=100){
   )
 }
 
-df.ui <- shinyUI(fluidPage(
+df.ui <- fluidPage(
   titlePanel('Dynamical Fever: computer exercise'),
   navlistPanel(
     tabPanel('Overview', includeMarkdown("inst/dynFev/overview.md"), br()),
@@ -189,15 +192,15 @@ df.ui <- shinyUI(fluidPage(
       br()
     ),
     tabPanel('Part 5: Vaccination outcomes', includeMarkdown("inst/dynFev/part5.md"), br())
-  ))
-)
+))
+
 
 df.server <- shinyServer({
   function(input, output) {
     output$targetPlot <- renderPlot({
       target.2017 <- run.example(input$VaxPct.Dogs, input$VaxPct.Humans)
       par(mar=c(5,5,5,1), mfrow=c(1,2)) # Set up plot
-      plot.cases(target.2017)
+      plot_cases(target.2017)
     })
     output$distPlot <- renderPlot({
       target.runs <- replicate(1000,total.cases(run.example(input$VaxPct.Dogs,input$VaxPct.Humans)))
@@ -219,5 +222,7 @@ df.server <- shinyServer({
 
   }})
 
+#' @title Start Dynamical Fever Tutorial
+#'
 #' @export
 dynamicalFever <- function() shinyApp(ui = df.ui, server = df.server)

@@ -16,7 +16,7 @@ equally weighted}
 \item{verbose}{Print progress messages?}
 }
 \value{
-A list with two elements, `source` and `sink`, each of length `n`,
+A list with two elements, \code{source} and \code{sink}, each of length \code{n},
 corresponding to the sampled pairs indices
 }
 \description{

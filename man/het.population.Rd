@@ -22,8 +22,8 @@ A numeric vector of contact rates, sorted from highest to lowest
 Create a sample of individuals with heterogeneous contact rates
 }
 \details{
-Per `?rgamma`, the gamma distribution is parameterized by `shape`
-and `scale` parameters.  These parameters are related to the mean by
+Per \code{?rgamma}, the gamma distribution is parameterized by \code{shape}
+and \code{scale} parameters.  These parameters are related to the mean by
 \deqn{E(X)=shape*scale} and the variance by \deqn{Var(X)=shape*scale^2}.
 }
 \examples{

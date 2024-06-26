@@ -8,9 +8,9 @@ het.hist(mxdst, beta.mean, binwidth = 0.1, ...)
 }
 \arguments{
 \item{mxdst}{A numeric vector of contact rates, as produced by
-[het.population()].}
+\code{\link[=het.population]{het.population()}}.}
 
-\item{beta.mean}{The mean contact rate, as passed to [het.population()].}
+\item{beta.mean}{The mean contact rate, as passed to \code{\link[=het.population]{het.population()}}.}
 
 \item{binwidth}{The width of the bins. Can be specified as a numeric value
 or as a function that calculates width from unscaled x. Here, "unscaled x"
@@ -46,10 +46,18 @@ A \code{function} will be called with a single argument,
 the plot data. The return value must be a \code{data.frame}, and
 will be used as the layer data. A \code{function} can be created
 from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
-    \item{\code{position}}{Position adjustment, either as a string naming the adjustment
-(e.g. \code{"jitter"} to use \code{position_jitter}), or the result of a call to a
-position adjustment function. Use the latter if you need to change the
-settings of the adjustment.}
+    \item{\code{position}}{A position adjustment to use on the data for this layer. This
+can be used in various ways, including to prevent overplotting and
+improving the display. The \code{position} argument accepts the following:
+\itemize{
+\item The result of calling a position function, such as \code{position_jitter()}.
+This method allows for passing extra arguments to the position.
+\item A string naming the position adjustment. To give the position as a
+string, strip the function name of the \code{position_} prefix. For example,
+to use \code{position_jitter()}, give the position as \code{"jitter"}.
+\item For more information and other ways to specify the position, see the
+\link[ggplot2:layer_positions]{layer position} documentation.
+}}
     \item{\code{na.rm}}{If \code{FALSE}, the default, missing values are removed with
 a warning. If \code{TRUE}, missing values are silently removed.}
     \item{\code{show.legend}}{logical. Should this layer be included in the legends?
@@ -69,7 +77,7 @@ to either \code{"x"} or \code{"y"}. See the \emph{Orientation} section for more 
   }}
 }
 \value{
-A `ggplot` object
+A \code{ggplot} object
 }
 \description{
 Plot a histogram of contact rates, with annotations for

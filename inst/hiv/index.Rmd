@@ -1,7 +1,7 @@
 ---
 title: "<a href='http://www.ici3d.org' alt = 'ICI3D'><img src='ici3d-logo-nav.png' title='ICI3D' width = '300'></a><br><br>HIV in Harare tutorial"
 subtitle: "Based on the spreadsheet tutorial by BG Williams and JW Hargrove"
-author: "<br>Juliet R.C. Pulliam &amp; Carl A.B. Pearson, 2016-2017<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
+author: "<br>Juliet R.C. Pulliam &amp; Carl A.B. Pearson, 2016-2024<br>Some rights reserved<br><br><a href='http://creativecommons.org/licenses/by-nc/4.0/'>CC BY-NC 4.0</a>"
 output:
   html_document:
     theme: spacelab
@@ -10,6 +10,7 @@ runtime: shiny
 ---
 
 ```{r, echo=FALSE, message=FALSE}
+library(ICI3D)
 hivdat <- system.file("hiv", "HIVtutorial.Rdata", package="ICI3D")
 attach(hivdat)
 ```
@@ -22,6 +23,12 @@ setB <- 0.029
 setMu <- 0.018
 setDelta <- 0.1
 setBoxes <- 4
+model_display <- function(fun) {
+  cat("```r\n")
+  cat(substitute(fun), "<- ")
+  cat(deparse(fun, control = "all"), sep="\n")
+  cat("```\n")
+}
 ```
 <br>
 
@@ -54,18 +61,8 @@ inputPanel(
 
 </div>
 <div class="col-lg-5">
-```{r}
-model1 <- function(t,y,parms){
-  with(c(as.list(y),parms),{
-    N <- sum(y)
-    FOI <- lambda*I/N
-    
-    dSdt <- b*N - FOI*S - mu*S
-    dIdt <- FOI*S - mu*I - delta*I
-    
-    list(c(dSdt,dIdt))
-  })
-}
+```{r, echo=FALSE, comment=NA, results='asis'}
+model_display(hiv_SI)
 ```
 </div>
 </div>
@@ -130,7 +127,7 @@ renderPlot({
       inits <- c(S=1,I=exp(input$p0))
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model1
+                               , func = hiv_SI
                                , parms = c(b = input$birthRate
                                            , mu = input$mu
                                            , lambda = input$lambda
@@ -169,7 +166,7 @@ renderPlot({
       inits <- c(S=1,I=exp(input$p0))
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model1
+                               , func = hiv_SI
                                , parms = c(b = input$birthRate
                                            , mu = input$mu
                                            , lambda = input$lambda
@@ -251,19 +248,8 @@ sidebarPanel(
 
 </div>
 <div class="col-lg-5">
-```{r}
-model2 <- function(t,y,parms){
-  with(c(as.list(y),parms),{
-    N <- sum(y)
-    lambdaHat <- lambda*exp(-a*I/N)
-    FOI <- lambdaHat*I/N
-    
-    dSdt <- b*N - FOI*S - mu*S
-    dIdt <- FOI*S - delta*I - mu*I
-    
-    list(c(dSdt,dIdt))
-  })
-}
+```{r, echo=FALSE, comment=NA, results='asis'}
+model_display(hiv_SIhet)
 ```
 </div>
 </div>
@@ -311,7 +297,7 @@ renderPlot({
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model2
+                               , func = hiv_SIhet
                                , parms = c(b = input$birthRate2
                                            , a = input$a
                                            , mu = setMu
@@ -352,7 +338,7 @@ renderPlot({
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model2
+                               , func = hiv_SIhet
                                , parms = c(b = input$birthRate2
                                            , a = input$a
                                            , mu = setMu
@@ -386,7 +372,7 @@ renderPlot({
       inits <- c(S=1,I=exp(-7))
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model2
+                               , func = hiv_SIhet
                                , parms = c(b = input$birthRate2
                                            , a = input$a
                                            , mu = setMu
@@ -472,26 +458,8 @@ renderPlot({
 </div>
 <div class="col-lg-11">
 
-```{r}
-model3 <- function(t,y,parms){
-  with(c(as.list(y),parms),{
-    N <- sum(y)
-    I <- I1 + I2 + I3 + I4
-    
-    lambdaHat <- lambda*exp(-a*I/N)
-    FOI <- lambdaHat*I/N
-    
-    g <- setBoxes*delta
-    
-    dSdt <- b*N - FOI*S - mu*S
-    dI1dt <- FOI*S - g*I1 - mu*I1
-    dI2dt <- g*I1 - g*I2 - mu*I2
-    dI3dt <- g*I2 - g*I3 - mu*I3
-    dI4dt <- g*I3 - g*I4 - mu*I4
-    
-    list(c(dSdt,dI1dt,dI2dt,dI3dt,dI4dt))
-  })
-}
+```{r, echo=FALSE, comment=NA, results='asis'}
+model_display(hiv_SI4)
 ```
 
 ```{r, echo=FALSE}
@@ -546,7 +514,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model3
+                               , func = hiv_SI4
                                , parms = c(b = setB
                                            , a = input$a3
                                            , mu = setMu
@@ -588,7 +556,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model3
+                               , func = hiv_SI4
                                , parms = c(b = setB
                                            , a = input$a3
                                            , mu = setMu
@@ -624,7 +592,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(-7),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model3
+                               , func = hiv_SI4
                                , parms = c(b = setB
                                            , a = input$a3
                                            , mu = setMu
@@ -701,27 +669,8 @@ renderPlot({
 </div>
 <div class="col-lg-11">
 
-```{r}
-model4 <- function(t,y,parms){
-  with(c(as.list(y),parms),{
-    N <- sum(y)
-    I <- I1 + I2 + I3 + I4
-    
-    lambdaHat <- lambda*exp(-a*I/N)
-    invControl <- min(1,1 - cMax/(1+exp(-cRate*(t-cHalf))))
-    FOI <- invControl*lambdaHat*I/N
-    
-    g <- setBoxes*delta
-    
-    dSdt <- b*N - FOI*S - mu*S
-    dI1dt <- FOI*S - g*I1 - mu*I1
-    dI2dt <- g*I1 - g*I2 - mu*I2
-    dI3dt <- g*I2 - g*I3 - mu*I3
-    dI4dt <- g*I3 - g*I4 - mu*I4
-    
-    list(c(dSdt,dI1dt,dI2dt,dI3dt,dI4dt))
-  })
-}
+```{r, echo=FALSE, comment=NA, results='asis'}
+model_display(hiv_SI4control)
 ```
 
 ```{r, echo=FALSE}
@@ -777,7 +726,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model4
+                               , func = hiv_SI4control
                                , parms = c(b = setB
                                            , a = input$a4
                                            , mu = setMu
@@ -881,7 +830,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model4
+                               , func = hiv_SI4control
                                , parms = c(b = setB
                                            , a = input$a4
                                            , mu = setMu
@@ -921,7 +870,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p04),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model4
+                               , func = hiv_SI4control
                                , parms = c(b = setB
                                            , a = input$a4
                                            , mu = setMu
@@ -1026,28 +975,8 @@ renderPlot({
 </div>
 <div class="col-lg-11">
 
-```{r}
-model5 <- function(t,y,parms){
-  with(c(as.list(y),parms),{
-    N <- sum(y)
-    I <- I1 + I2 + I3 + I4
-    
-    lambdaHat <- lambda*exp(-a*I/N)
-
-    g <- setBoxes*delta
-
-    mortResponse <- exp(-q*g*I4/N)
-    FOI <- mortResponse*lambdaHat*I/N
-    
-    dSdt <- b*N - FOI*S - mu*S
-    dI1dt <- FOI*S - g*I1 - mu*I1
-    dI2dt <- g*I1 - g*I2 - mu*I2
-    dI3dt <- g*I2 - g*I3 - mu*I3
-    dI4dt <- g*I3 - g*I4 - mu*I4
-    
-    list(c(dSdt,dI1dt,dI2dt,dI3dt,dI4dt))
-  })
-}
+```{r, echo=FALSE, comment=NA, results='asis'}
+model_display(hiv_SI4react)
 ```
 
 ```{r, echo=FALSE}
@@ -1099,7 +1028,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model5
+                               , func = hiv_SI4react
                                , parms = c(b = setB
                                            , a = input$a5
                                            , mu = setMu
@@ -1144,7 +1073,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model5
+                               , func = hiv_SI4react
                                , parms = c(b = setB
                                            , a = input$a5
                                            , mu = setMu
@@ -1183,7 +1112,7 @@ renderPlot({
       inits <- c(S=1,I1=exp(input$p05),I2=0,I3=0,I4=0)
       traj <- data.frame(lsoda(y = inits
                                , times = seq(startYear,endYear,0.1)
-                               , func = model5
+                               , func = hiv_SI4react
                                , parms = c(b = setB
                                            , a = input$a5
                                            , mu = setMu

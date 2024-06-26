@@ -1,5 +1,16 @@
 #' @title Introduction to R and Its Quirks
 #'
+#' @author David M. Goehring 2004
+#' @author Juliet R. C. Pulliam 2008, 2009, 2019, 2023
+#' @author Steve Bellan 2010
+#' @author Carl A. B. Pearson 2024
+#'
+#' International Clinics on Infectious Disease Dynamics and Data Program
+#'
+#' @license Some Rights Reserved,
+#' CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)
+#' Last updated by Carl A. B. Pearson, June 2024
+#'
 #' @section General Advice
 #'
 #'  1. Pay attention!
@@ -739,10 +750,10 @@ library("ggplot2")
 #' 32	       0
 #'
 #' @hint The vector `week` can be created easily using the R function
-#' seq() or the : operator.)
+#' seq() or the `:` operator.)
 #'
 #' @question 3. Generate an epidemic curve using your newly-created vectors and
-#' the barplot() function.  Label your x- and y-axes, give your figure
+#' the `barplot()` function.  Label your x- and y-axes, give your figure
 #' a title, set the y-axis to go from 0 to 6, and remove the spaces
 #' between bars.
 #'
