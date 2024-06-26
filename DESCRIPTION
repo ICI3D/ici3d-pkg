@@ -7,7 +7,7 @@ Description: The ICI3D package provides course material--data and rshiny demonst
     for the Clinic on Dynamical Approaches to Infectious Disease Data (DAIDD)
     and the Clinic on the Meaningful Modeling of Epidemiological Data (MMED),
     run by the ICI3D Program (www.ici3d.org).
-Depends: R (>= 3.1.0)
+Depends: R (>= 4.2.0)
 Encoding: UTF-8
 License: CC BY-SA 4.0
 LazyData: true
@@ -24,4 +24,5 @@ Imports:
     deSolve,
     ragg
 VignetteBuilder: knitr
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
+Roxygen: list(markdown = TRUE)
