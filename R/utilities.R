@@ -2,10 +2,6 @@
 #' @title Internal Function for Creating Directories
 #'
 #' @param path the directory to create
-#'
-#' @inheritDotParams dir.create
-#'
-#' @return see [dir.create]
 checked_dir_create <- function(path, ...) {
   r <- readline(prompt = sprintf(
     "Try to create path '%s' ? (y/anything else == no) ", path
@@ -28,7 +24,7 @@ allow_overwrite <- function(path) {
   )) == "y")
 }
 
-#' Create a local copy of the tutorials.
+#' @title Create a local copy of the tutorials.
 #'
 #' @param path, string; the path to enclosing directory. If this directory does
 #'   not exist, will create it
@@ -38,7 +34,8 @@ allow_overwrite <- function(path) {
 #'
 #' @param what, string: the "scripts" or the "solutions"?
 #'
-#' @details This function creates a local copy of the R scripts associated with
+#' @details
+#' This function creates a local copy of the R scripts associated with
 #' the ICI3D short courses, for students to edit and run during learning
 #' activities. These scripts should only require the `ICI3D` package and
 #' associated dependencies.
@@ -51,18 +48,16 @@ allow_overwrite <- function(path) {
 #'
 #' If used with default `what` argument, you will get a "scripts" subdirectory,
 #' and if you ask for `what = "solutions"` there will be a "solutions"
-# subdirectory. Both will contain sessions by name, scripts by order and
-# shortname, without and with solutions filled in, respectively.
+#' subdirectory. Both will contain sessions by name, scripts by order and
+#' shortname, without and with solutions filled in, respectively.
 #'
 #' @return string or `NULL`; non-`NULL` indicates successful creation + copy and
 #' is the top level root of the course material.
 #'
 #' @examples
-#' require(MTM)
-#' tardir <- scripts()
+#' tardir <- ICI3D::scripts()
 #' list.files(tardir, recursive = TRUE)
 #'
-#' @export
 scripts <- function(
     path = file.path(
       if (.Platform$OS.type == "windows") {
